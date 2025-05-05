@@ -6,12 +6,14 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "shader.h"
 
-#include <iostream>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
 int main() {
+
+
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
@@ -22,11 +24,17 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // Optional: disable window resizing
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+    // Define triangle vertices
+    GLfloat vertices[] = {
+        -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+        0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+        0.0f, 0.5f * float(sqrt(3)) * 2/ 3, 0.0f,
+    };
+
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Version Check", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL Version Check", nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -41,6 +49,30 @@ int main() {
         return -1;
     }
 
+    // Specify viewport of OpenGL
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+
+    // Shader
+    Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
+
+    // Create Vertex Buffer Object (VBO)
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Configure VBO
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Reset VAO and VBO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     // Print version info
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLSL Version:   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
@@ -49,9 +81,24 @@ int main() {
 
     // Keep window open until closed
     while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+
+        // Background Color
+        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        shaderProgram.use();
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+
         glfwSwapBuffers(window);
+        glfwPollEvents();
     }
+
+    // Cleanup
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram.m_ProgramId);
 
     // Clean up
     glfwDestroyWindow(window);
