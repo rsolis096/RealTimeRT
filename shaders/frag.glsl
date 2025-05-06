@@ -3,18 +3,33 @@
 in  vec2 fragUV;
 out vec4 FragColor;
 
+const float positiveInfinity = 3.402823466e+38;
+
 struct Ray {
     vec3 origin;
     vec3 direction;
 };
 
-bool hit_sphere(vec3 center, float radius, Ray r) {
-    vec3 oc = center - r.origin;
-    float a = dot(r.direction, r.direction);
-    float b = -2.0 * dot(r.direction, oc);
-    float c = dot(oc, oc) - radius*radius;
-    float discriminant = b*b - 4*a*c;
-    return (discriminant >= 0);
+struct hit_record {
+    vec3 point;
+    vec3 normal;
+    float t;
+    bool front_face;
+};
+
+struct Hittable {
+    int type;
+    vec3 sphereCenter;
+    float sphereRadius;
+};
+
+void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
+    // Sets the hit record normal vector.
+    // NOTE: the parameter `outward_normal` is assumed to have unit length.
+
+    // Sphere
+    rec.front_face = dot(r.direction, outward_normal) < 0;
+    rec.normal = rec.front_face ? outward_normal : -outward_normal;
 }
 
 Ray make_ray(vec3 origin, vec3 direction) {
@@ -28,24 +43,65 @@ vec3 ray_at(Ray r, float t) {
     return r.origin + t * r.direction;
 }
 
+
+//TODO: Add a generic hit function for a hittable list
+
+bool intersectSphere(Ray r, float ray_tmin, float ray_tmax, out hit_record rec, Hittable obj) {
+        vec3 oc = obj.sphereCenter - r.origin;
+        float a = dot(r.direction, r.direction);
+        float h = dot(r.direction, oc);
+        float c = dot(oc, oc) - obj.sphereRadius*obj.sphereRadius;
+
+        float discriminant = h*h - a*c;
+        if (discriminant < 0)
+            return false;
+
+        float sqrtd = sqrt(discriminant);
+
+        // Find the nearest root that lies in the acceptable range.
+        float root = (h - sqrtd) / a;
+        if (root <= ray_tmin || ray_tmax <= root) {
+            root = (h + sqrtd) / a;
+            if (root <= ray_tmin || ray_tmax <= root)
+                return false;
+        }
+
+        rec.t = root;
+        rec.point = ray_at(r, rec.t);
+        vec3 outward_normal = (rec.point - obj.sphereCenter) / obj.sphereRadius;
+        set_face_normal(r, rec, outward_normal);
+
+        return true;
+}
+
 vec3 ray_color(Ray r) {
 
-    if (hit_sphere(vec3(0,0,-1), 0.5, r))
-        return vec3(1, 0, 0);
+    Hittable sphere1;
+    sphere1.type = 0;
+    sphere1.sphereCenter = vec3(0,0,-1);
+    sphere1.sphereRadius = 0.5;
 
-    // simple gradient background
-    vec3 unit_dir = normalize(r.direction);
-    float t = 0.5 * (unit_dir.y + 1.0);
-    return mix(
-        vec3(1.0, 1.0, 1.0),
-        vec3(0.5, 0.7, 1.0),
-        t
-    );
+    Hittable sphere2;
+    sphere2.type = 0;
+    sphere2.sphereCenter = vec3(0,-100.5,-1);
+    sphere2.sphereRadius = 100;
+
+    hit_record rec;
+    bool res = intersectSphere(r, 0, positiveInfinity, rec, sphere2);
+    if (res) {
+        return 0.5 * (rec.normal + vec3(1,1,1));
+    }
+
+    vec3 unit_direction = normalize(r.direction);
+    float a = 0.5*(unit_direction.y + 1.0);
+    return (1.0-a)*vec3(1.0, 1.0, 1.0) + a*vec3(0.5, 0.7, 1.0);
 }
+
+
 
 void main() {
 
-    // AHard code resolution
+    // Hard code resolution
     ivec2 resolution = ivec2(1280, 720);
     vec3 cam_origin = vec3(0.0);
 
