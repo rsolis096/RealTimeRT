@@ -79,8 +79,15 @@ int main() {
     std::cout << "Vendor:         " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "Renderer:       " << glGetString(GL_RENDERER) << std::endl;
 
+    double previousTime = glfwGetTime();
+    int frameCount = 0;
+
     // Keep window open until closed
     while (!glfwWindowShouldClose(window)) {
+
+
+        // Measure speed
+        double startTime = glfwGetTime();
 
         // Background Color
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -93,6 +100,11 @@ int main() {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        double endTime = glfwGetTime();
+
+        std::cout << 1 / (endTime - startTime) << "\r";
+
     }
 
     // Cleanup
