@@ -1,6 +1,5 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
-
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -8,9 +7,9 @@
 #include <GLFW/glfw3.h>
 #include "shader.h"
 #include <vector>
+#include "camera.h"
+#include "utilities.h"
 
-const unsigned int SCR_WIDTH = 1280;
-const unsigned int SCR_HEIGHT = 720;
 
 int main() {
 
@@ -45,6 +44,7 @@ int main() {
     // Specify viewport of OpenGL
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
+
     // Shader
     Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
 
@@ -57,8 +57,8 @@ int main() {
     };
 
     std::vector<Hittable> hitObjects = {
-        {0, glm::vec3(0.0f,0.0f,-1.f), 0.5f},
         {0, glm::vec3(0.0f,-100.5f,-1.f), 100.f},
+        {0, glm::vec3(0.0f,0.0f,-1.f), 0.5f},
     };
 
     // Quad rendered in vertex shader but some vao must be bound to render anything
@@ -79,6 +79,10 @@ int main() {
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].sphereRadius);
     }
 
+    // Init Camera
+    Camera cam;
+    cam.initialize();
+
     // Print version info
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLSL Version:   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
@@ -88,8 +92,11 @@ int main() {
     double previousTime = glfwGetTime();
 
     // Keep window open until closed
-    while (!glfwWindowShouldClose(window)) {
 
+    std::vector<float> uRandom = {0,0,0,0};
+
+    while (!glfwWindowShouldClose(window)) {
+            
 
         // Measure speed
         double startTime = glfwGetTime();
@@ -99,6 +106,14 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         shaderProgram.use();          // make sure it’s still bound
+
+        // Generate the random numbers
+        set_urandom(uRandom);
+        for (int i = 0; i < uRandom.size(); i++) {
+            //std::cout << uRandom[i] << " ";
+        }
+        //std::cout << "\n";
+
         glBindVertexArray(vao);       // bind the VAO
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);

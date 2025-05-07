@@ -3,7 +3,7 @@
 in  vec2 fragUV;
 out vec4 FragColor;
 
-const float positiveInfinity = 3.402823466e+38;
+/* Struct Definitions */
 
 struct Ray {
     vec3 origin;
@@ -22,9 +22,43 @@ struct Hittable {
     vec3 sphereCenter;
     float sphereRadius;
 };
+
+struct Interval {
+    float min;
+    float max;
+};
+
+/* Constants */
 const int MAX_HITTABLES = 2;
+const float POS_MAX = 3.402823466e+38;
+const float NEG_MAX = -3.402823466e+38;
+
+/* Uniforms */
 uniform int   hittableCount;
 uniform Hittable hittables[MAX_HITTABLES];
+uniform vec4 uRandom; // 4 randomonly generated floats
+
+/* Function Implementations*/
+
+float size(Interval i)  {
+    return i.max - i.min;
+}
+
+bool contains(Interval i, float x)  {
+    return i.min <= x && x <= i.max;
+}
+
+bool surrounds(Interval i, float x)  {
+    return i.min < x && x < i.max;
+}
+
+float clamp(Interval i, float x) {
+    if (x < i.min) return i.min;
+    if (x > i.max) return i.max;
+    return x;
+}
+
+/*OTHER*/
 
 
 void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
@@ -47,10 +81,7 @@ vec3 ray_at(Ray r, float t) {
     return r.origin + t * r.direction;
 }
 
-
-//TODO: Add a generic hit function for a hittable list
-
-bool intersectSphere(Ray r, float ray_tmin, float ray_tmax, out hit_record rec, Hittable obj) {
+bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable obj) {
         vec3 oc = obj.sphereCenter - r.origin;
         float a = dot(r.direction, r.direction);
         float h = dot(r.direction, oc);
@@ -64,9 +95,9 @@ bool intersectSphere(Ray r, float ray_tmin, float ray_tmax, out hit_record rec, 
 
         // Find the nearest root that lies in the acceptable range.
         float root = (h - sqrtd) / a;
-        if (root <= ray_tmin || ray_tmax <= root) {
+        if (!surrounds(ray_t, root)) {
             root = (h + sqrtd) / a;
-            if (root <= ray_tmin || ray_tmax <= root)
+            if (!surrounds(ray_t, root))
                 return false;
         }
 
@@ -80,23 +111,21 @@ bool intersectSphere(Ray r, float ray_tmin, float ray_tmax, out hit_record rec, 
 
 vec3 ray_color(Ray r) {
 
-    Hittable sphere1;
-    sphere1.type = 0;
-    sphere1.sphereCenter = vec3(0,0,-1);
-    sphere1.sphereRadius = 0.5;
-
-    Hittable sphere2;
-    sphere2.type = 0;
-    sphere2.sphereCenter = vec3(0,-100.5,-1);
-    sphere2.sphereRadius = 100;
-
+    bool hit_anything = false;
     hit_record rec;
-    
+    float closest_so_far = POS_MAX;
+    Interval interval = {0, POS_MAX};
+
     for(int i = 0; i < 2; i++){
-        bool res = intersectSphere(r, 0, positiveInfinity, rec, hittables[i]);
-        if (res) {
-            return 0.5 * (rec.normal + vec3(1,1,1));
+        bool res = intersectSphere(r, interval, rec, hittables[i]);
+        if(res){
+            hit_anything = true;
+            closest_so_far = rec.t;
         }
+    }
+
+    if (hit_anything) {
+        return 0.5 * (rec.normal + vec3(1,1,1));
     }
     
 
@@ -113,6 +142,7 @@ void main() {
     ivec2 resolution = ivec2(1280, 720);
     vec3 cam_origin = vec3(0.0);
 
+    // Get the current fragment (pixel)
     ivec2 pixel = ivec2(gl_FragCoord.xy);
     // Convert so (0,0) is upperleft instead of bottomleft:
     pixel.y = resolution.y - 1 - pixel.y;
