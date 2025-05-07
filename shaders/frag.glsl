@@ -22,6 +22,10 @@ struct Hittable {
     vec3 sphereCenter;
     float sphereRadius;
 };
+const int MAX_HITTABLES = 2;
+uniform int   hittableCount;
+uniform Hittable hittables[MAX_HITTABLES];
+
 
 void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
     // Sets the hit record normal vector.
@@ -87,10 +91,14 @@ vec3 ray_color(Ray r) {
     sphere2.sphereRadius = 100;
 
     hit_record rec;
-    bool res = intersectSphere(r, 0, positiveInfinity, rec, sphere2);
-    if (res) {
-        return 0.5 * (rec.normal + vec3(1,1,1));
+    
+    for(int i = 0; i < 2; i++){
+        bool res = intersectSphere(r, 0, positiveInfinity, rec, hittables[i]);
+        if (res) {
+            return 0.5 * (rec.normal + vec3(1,1,1));
+        }
     }
+    
 
     vec3 unit_direction = normalize(r.direction);
     float a = 0.5*(unit_direction.y + 1.0);

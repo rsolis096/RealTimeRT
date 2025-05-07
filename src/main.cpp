@@ -7,6 +7,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "shader.h"
+#include <vector>
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -24,14 +25,6 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    // Define triangle vertices
-    GLfloat vertices[] = {
-        -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-        0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-        0.0f, 0.5f * float(sqrt(3)) * 2/ 3, 0.0f,
-    };
-
 
     // Create window
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL Version Check", nullptr, nullptr);
@@ -55,23 +48,36 @@ int main() {
     // Shader
     Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
 
-    // Create Vertex Buffer Object (VBO)
-    GLuint VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    // Create Spheres
 
-    glBindVertexArray(VAO);
+    struct Hittable {
+        int type;
+        glm::vec3 sphereCenter;
+        float sphereRadius;
+    };
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    std::vector<Hittable> hitObjects = {
+        {0, glm::vec3(0.0f,0.0f,-1.f), 0.5f},
+        {0, glm::vec3(0.0f,-100.5f,-1.f), 100.f},
+    };
 
-    // Configure VBO
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void*)0);
-    glEnableVertexAttribArray(0);
+    // Quad rendered in vertex shader but some vao must be bound to render anything
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-    // Reset VAO and VBO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    shaderProgram.use();
+
+    int locCount = glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount");
+    glUniform1i(locCount, (int)hitObjects.size());
+
+    for (int i = 0; i < hitObjects.size(); ++i) {
+        // objects[i].type
+        std::string base = "hittables[" + std::to_string(i) + "].";
+        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "type").c_str()), hitObjects[i].type);
+        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].sphereCenter));
+        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].sphereRadius);
+    }
 
     // Print version info
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
@@ -80,7 +86,6 @@ int main() {
     std::cout << "Renderer:       " << glGetString(GL_RENDERER) << std::endl;
 
     double previousTime = glfwGetTime();
-    int frameCount = 0;
 
     // Keep window open until closed
     while (!glfwWindowShouldClose(window)) {
@@ -93,9 +98,10 @@ int main() {
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shaderProgram.use();
-        glBindVertexArray(VAO);
+        shaderProgram.use();          // make sure it’s still bound
+        glBindVertexArray(vao);       // bind the VAO
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(0);
 
 
         glfwSwapBuffers(window);
@@ -103,14 +109,14 @@ int main() {
 
         double endTime = glfwGetTime();
 
-        std::cout << 1 / (endTime - startTime) << "\r";
+        //std::cout << (int)(1 / (endTime - startTime)) << "\r";
 
     }
 
     // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram.m_ProgramId);
+    glBindVertexArray(0);
+    glDeleteVertexArrays(1, &vao);
 
     // Clean up
     glfwDestroyWindow(window);
