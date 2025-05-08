@@ -105,14 +105,10 @@ int main() {
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shaderProgram.use();          // make sure it’s still bound
-
-        // Generate the random numbers
-        set_urandom(uRandom);
-        for (int i = 0; i < uRandom.size(); i++) {
-            //std::cout << uRandom[i] << " ";
-        }
-        //std::cout << "\n";
+        shaderProgram.use();
+        // Generate a random seed for the shader
+        float seed = random_float();
+        shaderProgram.setFloat("uSeed",  seed);
 
         glBindVertexArray(vao);       // bind the VAO
         glDrawArrays(GL_TRIANGLES, 0, 3);

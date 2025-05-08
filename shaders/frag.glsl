@@ -36,9 +36,9 @@ const float NEG_MAX = -3.402823466e+38;
 /* Uniforms */
 uniform int   hittableCount;
 uniform Hittable hittables[MAX_HITTABLES];
-uniform vec4 uRandom; // 4 randomonly generated floats
+uniform float uSeed; // Time used for random vallue seeding
 
-/* Function Implementations*/
+/* Utilities & Implementations */
 
 float size(Interval i)  {
     return i.max - i.min;
@@ -58,8 +58,23 @@ float clamp(Interval i, float x) {
     return x;
 }
 
-/*OTHER*/
+// Returns a random float from [0, 1]
+float random_float(vec2 st)
+{
+    float temp = fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+    return mod(temp, 1.0);
+}
 
+// Returns a random unit vector
+vec3 random_vec3(){
+
+    vec2 seed = gl_FragCoord.xy + vec2(uSeed, -uSeed);
+    float r1 = random_float(seed + vec2(1.0, 0.0));
+    float r2 = random_float(seed + vec2(0.0, 0.0));
+    float r3 = random_float(seed + vec2(0.0, 1.0));
+
+    return normalize(vec3(r1, r2, r3));
+}
 
 void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
     // Sets the hit record normal vector.
@@ -68,6 +83,14 @@ void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
     // Sphere
     rec.front_face = dot(r.direction, outward_normal) < 0;
     rec.normal = rec.front_face ? outward_normal : -outward_normal;
+}
+
+vec2 sample_square2D() {
+    vec2 r = vec2(
+      random_float(gl_FragCoord.xy + vec2(uSeed, -uSeed)),  // or however you seed
+      random_float(gl_FragCoord.xy + vec2(-uSeed, uSeed))
+    );
+    return r - 0.5;
 }
 
 Ray make_ray(vec3 origin, vec3 direction) {
@@ -134,33 +157,52 @@ vec3 ray_color(Ray r) {
     return (1.0-a)*vec3(1.0, 1.0, 1.0) + a*vec3(0.5, 0.7, 1.0);
 }
 
-
-
 void main() {
-
-    // Hard code resolution
     ivec2 resolution = ivec2(1280, 720);
-    vec3 cam_origin = vec3(0.0);
+    vec3  cam_origin = vec3(0.0);
 
-    // Get the current fragment (pixel)
-    ivec2 pixel = ivec2(gl_FragCoord.xy);
-    // Convert so (0,0) is upperleft instead of bottomleft:
-    pixel.y = resolution.y - 1 - pixel.y;
+    int   samples = 10;
+    vec3  pixel_color = vec3(0.0);
 
-    // normalize pixel coords to [0,1]
-    vec2 uv = vec2(pixel) / vec2(resolution);
+    for (int i = 0; i < samples; ++i) {
 
-    // map to [-1,1] and preserve aspect
-    float aspect = float(resolution.x) / float(resolution.y);
+        // 1) Create a seed for jitter vec generation
+        float fi = float(i);
+        vec2 seed = gl_FragCoord.xy + vec2(uSeed + fi, uSeed - fi);
 
-    vec3 dir = normalize(vec3(
-        (2.0*uv.x - 1.0) * aspect,
-        1.0 - 2.0*uv.y,
-        -1.0  // look into the scene
-    ));
+        // 2) Create jitter offset for anti-aliasing [-0.5, 0.5]
+        vec2 jitter = vec2(
+            random_float(seed + vec2(1.0,0.0)),
+            random_float(seed + vec2(0.0,1.0))
+        ) - 0.5;
 
-    Ray r = make_ray(cam_origin, dir);
-    vec3 col = ray_color(r);
+        // 3) Set pixel coords with offset for current sample
+        vec2 pixel_coords = vec2(gl_FragCoord.xy) + jitter;
 
-    FragColor = vec4(col, 1.0);
+        // 4) Convert pixel coords to UV coords
+        vec2 uv = pixel_coords / vec2(resolution);
+
+        // Transform y to make image upright as per RTOW
+        uv.y = 1.0 - uv.y; 
+
+        float aspect = float(resolution.x) / float(resolution.y);
+        float ndcX = 2.0 * uv.x - 1.0;    // map uv.x from [0,1] -> [-1,1]
+        float ndcY = 1.0 - 2.0 * uv.y;    // map uv.y from [0,1] -> [1,-1] 
+
+        vec3  dir = normalize(vec3(
+            ndcX * aspect,
+            ndcY,
+            -1.0
+        ));
+
+        // 5) Trace Ray
+        Ray r = make_ray(cam_origin, dir);
+        pixel_color += ray_color(r);
+    }
+
+    // 6) average
+    pixel_color /= float(samples);
+
+    FragColor = vec4(pixel_color, 1.0);
 }
+
