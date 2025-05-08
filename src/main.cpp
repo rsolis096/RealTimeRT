@@ -68,9 +68,9 @@ int main() {
 
     shaderProgram.use();
 
+    // Apply constant uniforms
     int locCount = glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount");
     glUniform1i(locCount, (int)hitObjects.size());
-
     for (int i = 0; i < hitObjects.size(); ++i) {
         // objects[i].type
         std::string base = "hittables[" + std::to_string(i) + "].";
@@ -78,10 +78,12 @@ int main() {
         glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].sphereCenter));
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].sphereRadius);
     }
+    shaderProgram.setInt("SCR_HEIGHT", SCR_HEIGHT);
+    shaderProgram.setInt("SCR_WIDTH", SCR_WIDTH);
 
     // Init Camera
-    Camera cam;
-    cam.initialize();
+    //Camera cam;
+    //cam.initialize();
 
     // Print version info
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
