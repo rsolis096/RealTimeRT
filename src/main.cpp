@@ -5,10 +5,13 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "shader.h"
 #include <vector>
+
+
+#include "shader.h"
 #include "camera.h"
 #include "utilities.h"
+#include "Hittable.h"
 
 
 int main() {
@@ -50,16 +53,34 @@ int main() {
 
     // Create Spheres
 
-    struct Hittable {
-        int type;
-        glm::vec3 sphereCenter;
-        float sphereRadius;
-    };
 
     std::vector<Hittable> hitObjects = {
-        {0, glm::vec3(0.0f,-100.5f,-1.f), 100.f},
-        {0, glm::vec3(0.0f,0.0f,-1.f), 0.5f},
+        {
+            glm::vec3(0.0f, -100.5f, -1.0f),  // position
+            glm::vec3(0.8f,   0.8f,  0.0f),  // albedo
+            100.0f,                              // radius
+            LAMBERTIAN                          // material
+        },
+        {
+            glm::vec3(0.0f,   0.0f, -1.2f),
+            glm::vec3(0.1f,   0.2f,  0.5f),
+             0.5f,
+            LAMBERTIAN
+        },
+        {
+            glm::vec3(-1.0f,   0.0f, -1.0f),
+            glm::vec3(0.8f,   0.8f,  0.8f),
+             0.5f,
+            METAL
+        },
+        {
+            glm::vec3(1.0f,   0.0f, -1.0f),
+            glm::vec3(0.8f,   0.6f,  0.2f),
+             0.5f,
+            METAL
+        }
     };
+
 
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;
@@ -68,7 +89,6 @@ int main() {
 
     shaderProgram.use();
 
-    glm::vec3 albedo = glm::vec3(0.0f, 0.6f, 0.0f);
 
     // Apply constant uniforms
     int locCount = glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount");
@@ -76,11 +96,10 @@ int main() {
     for (int i = 0; i < hitObjects.size(); ++i) {
         // objects[i].type
         std::string base = "hittables[" + std::to_string(i) + "].";
-        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "type").c_str()), hitObjects[i].type);
-        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].sphereCenter));
-        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].sphereRadius);
-        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), 0);
-        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(albedo));
+        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].m_Position));
+        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].m_Radius);
+        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), hitObjects[i].m_Type);
+        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(hitObjects[i].m_Albedo));
 
     }
     shaderProgram.setInt("SCR_HEIGHT", SCR_HEIGHT);

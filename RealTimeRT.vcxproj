@@ -21,7 +21,9 @@
   <ItemGroup>
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\Hittable.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\shader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -30,6 +32,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\Hittable.h" />
+    <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\utilities.h" />
   </ItemGroup>

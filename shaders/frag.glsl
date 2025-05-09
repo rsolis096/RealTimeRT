@@ -24,7 +24,6 @@ struct hit_record {
 };
 
 struct Hittable {
-    int type;
     vec3 sphereCenter;
     float sphereRadius;
     Material mat;
@@ -36,7 +35,7 @@ struct Interval {
 };
 
 /* Constants */
-const int MAX_HITTABLES = 2;
+const int MAX_HITTABLES = 16;
 const float POS_MAX = 3.402823466e+38;
 const float NEG_MAX = -3.402823466e+38;
 
