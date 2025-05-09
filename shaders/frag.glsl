@@ -167,15 +167,14 @@ bool scatter(
     in  Ray        r_in,        // incoming ray (read-only)
     in  hit_record rec,         // hit info (read-only)
     out vec3       attenuation, // how the color is attenuated
-    out Ray        scattered,   // the scattered ray
-    in  Material   mat          // which material to use
+    out Ray        scattered   // the scattered ray
 ){
     
     //mat. == 0 is lambertian
     //matType == 1 is dielectric
 
     // Lambertian
-    if(mat.type == 0) {
+    if(rec.mat.type == 0) {
         vec3 scatter_direction = rec.normal + random_unit_vector();
 
         // Catch degenerate scatter direction
@@ -185,18 +184,18 @@ bool scatter(
         scattered.origin = rec.point;
         scattered.direction = scatter_direction;        
         
-        attenuation = mat.albedo;
+        attenuation = rec.mat.albedo;
         return true;
     }
 
     // Metal
-    if(mat.type == 1) {
+    if(rec.mat.type == 1) {
         vec3 reflected = reflect(r_in.direction, rec.normal);
         
         scattered.origin = rec.point;
         scattered.direction = reflected;
 
-        attenuation = mat.albedo;
+        attenuation = rec.mat.albedo;
         return true;
     }
 
@@ -242,15 +241,20 @@ vec3 ray_color(Ray r) {
     for (int depth = 0; depth < MAX_DEPTH; ++depth) {
         
         // 1) cast ray r into the scene
-        hit_record rec;
+        hit_record closest_rec;
         bool hit_something = false;
         float closest_hit = POS_MAX;
         Interval ray_t = Interval(0.001, POS_MAX);
 
         for (int i = 0; i < hittableCount; ++i) {
-            if (intersectSphere(r, ray_t, rec, hittables[i]) && rec.t < closest_hit) {
+            hit_record temp_rec;
+
+            // Find closest hit, save it to closest_rec
+            Interval testT = Interval(0.001, closest_hit);
+            if (intersectSphere(r, testT, temp_rec, hittables[i])) {
                 hit_something = true;
-                closest_hit = rec.t;
+                closest_hit     = temp_rec.t;   // tighten *our* closestT
+                closest_rec      = temp_rec;     // save the record
             }
         }
 
@@ -266,7 +270,7 @@ vec3 ray_color(Ray r) {
         // 3) we hit something: scatter
         vec3 attenuation;
         Ray scattered;
-        if (scatter(r, rec, attenuation, scattered, rec.mat)) {
+        if (scatter(r, closest_rec, attenuation, scattered)) {
             // accumulate the attenuation
             throughput *= attenuation;
             // continue tracing the scattered ray

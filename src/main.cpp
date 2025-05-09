@@ -55,6 +55,12 @@ int main() {
 
 
     std::vector<Hittable> hitObjects = {
+                {
+            glm::vec3(-1.0f,   0.0f, -1.0f),
+            glm::vec3(0.8f,   0.8f,  0.8f),
+             0.5f,
+            METAL
+        },
         {
             glm::vec3(0.0f, -100.5f, -1.0f),  // position
             glm::vec3(0.8f,   0.8f,  0.0f),  // albedo
@@ -67,12 +73,7 @@ int main() {
              0.5f,
             LAMBERTIAN
         },
-        {
-            glm::vec3(-1.0f,   0.0f, -1.0f),
-            glm::vec3(0.8f,   0.8f,  0.8f),
-             0.5f,
-            METAL
-        },
+
         {
             glm::vec3(1.0f,   0.0f, -1.0f),
             glm::vec3(0.8f,   0.6f,  0.2f),
