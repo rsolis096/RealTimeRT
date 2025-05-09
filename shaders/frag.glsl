@@ -10,17 +10,24 @@ struct Ray {
     vec3 direction;
 };
 
+struct Material {
+    int type;
+    vec3 albedo;
+};
+
 struct hit_record {
     vec3 point;
     vec3 normal;
     float t;
     bool front_face;
+    Material mat;
 };
 
 struct Hittable {
     int type;
     vec3 sphereCenter;
     float sphereRadius;
+    Material mat;
 };
 
 struct Interval {
@@ -146,6 +153,58 @@ float linear_to_gamma(float linear_component)
     return 0;
 }
 
+vec3 reflect(vec3 v, vec3 n) {
+    return v - 2*dot(v,n)*n;
+}
+
+bool near_zero(vec3 v) {
+    const float s = 1e-8;
+    // abs(v) < vec3(s) yields a bvec3, and all(...) checks all components
+    return all( lessThan( abs(v), vec3(s) ) );
+}
+
+// Material Scattering
+bool scatter(
+    in  Ray        r_in,        // incoming ray (read-only)
+    in  hit_record rec,         // hit info (read-only)
+    out vec3       attenuation, // how the color is attenuated
+    out Ray        scattered,   // the scattered ray
+    in  Material   mat          // which material to use
+){
+    
+    //mat. == 0 is lambertian
+    //matType == 1 is dielectric
+
+    // Lambertian
+    if(mat.type == 0) {
+        vec3 scatter_direction = rec.normal + random_unit_vector();
+
+        // Catch degenerate scatter direction
+        if (near_zero(scatter_direction))
+            scatter_direction = rec.normal;
+            
+        scattered.origin = rec.point;
+        scattered.direction = scatter_direction;        
+        
+        attenuation = mat.albedo;
+        return true;
+    }
+
+    // Metal
+    if(mat.type == 1) {
+        vec3 reflected = reflect(r_in.direction, rec.normal);
+        
+        scattered.origin = rec.point;
+        scattered.direction = reflected;
+
+        attenuation = mat.albedo;
+        return true;
+    }
+
+    return false;
+
+}
+
 bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable obj) {
         vec3 oc = obj.sphereCenter - r.origin;
         float a = dot(r.direction, r.direction);
@@ -170,46 +229,50 @@ bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable o
         rec.point = ray_at(r, rec.t);
         vec3 outward_normal = (rec.point - obj.sphereCenter) / obj.sphereRadius;
         set_face_normal(r, rec, outward_normal);
+        rec.mat = obj.mat;
 
         return true;
 }
 
+const int MAX_DEPTH = 10;
+
 vec3 ray_color(Ray r) {
-    vec3 energy = vec3(1.0);   // start with 100% energy
-    vec3 result = vec3(0.0);   // accumulated color
+    vec3 throughput = vec3(1.0);   // cumulative attenuation
+    vec3 result  = vec3(0.0);   // what we’ll return
 
-    const int MAX_DEPTH = 10;
     for (int depth = 0; depth < MAX_DEPTH; ++depth) {
-
-        // 1) Find the closest hit within the scene
+        
+        // 1) cast ray r into the scene
         hit_record rec;
-        bool hit_anything = false;
-        float closest_t = POS_MAX;
+        bool hit_something = false;
+        float closest_hit = POS_MAX;
         Interval ray_t = Interval(0.001, POS_MAX);
 
         for (int i = 0; i < hittableCount; ++i) {
-            if (intersectSphere(r, ray_t, rec, hittables[i]) && rec.t < closest_t) {
-                hit_anything = true;
-                closest_t    = rec.t;
+            if (intersectSphere(r, ray_t, rec, hittables[i]) && rec.t < closest_hit) {
+                hit_something = true;
+                closest_hit = rec.t;
             }
         }
 
-        // 2) No hit found, this is sky
-        if (!hit_anything) {
+        // 2) if we missed, add sky and break
+        if (!hit_something) {
             vec3 unit_dir = normalize(r.direction);
             float t = 0.5 * (unit_dir.y + 1.0);
             vec3 sky = (1.0-t)*vec3(1.0) + t*vec3(0.5, 0.7, 1.0);
-            result += energy * sky;
+            result += throughput * sky;
             return result;
         }
 
-        // 3) Hit an object so scatter on this point
-        vec3 target = rec.normal + random_unit_vector();
-        r.origin    = rec.point;
-        r.direction = target;
-
-        //  Energy fall off for bounced lights
-        energy *= 0.5;
+        // 3) we hit something: scatter
+        vec3 attenuation;
+        Ray scattered;
+        if (scatter(r, rec, attenuation, scattered, rec.mat)) {
+            // accumulate the attenuation
+            throughput *= attenuation;
+            // continue tracing the scattered ray
+            r = scattered;
+        }
     }
 
     return result;

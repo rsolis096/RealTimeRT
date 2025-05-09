@@ -68,6 +68,8 @@ int main() {
 
     shaderProgram.use();
 
+    glm::vec3 albedo = glm::vec3(0.0f, 0.6f, 0.0f);
+
     // Apply constant uniforms
     int locCount = glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount");
     glUniform1i(locCount, (int)hitObjects.size());
@@ -77,6 +79,9 @@ int main() {
         glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "type").c_str()), hitObjects[i].type);
         glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].sphereCenter));
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].sphereRadius);
+        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), 0);
+        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(albedo));
+
     }
     shaderProgram.setInt("SCR_HEIGHT", SCR_HEIGHT);
     shaderProgram.setInt("SCR_WIDTH", SCR_WIDTH);
