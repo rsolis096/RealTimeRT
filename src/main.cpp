@@ -52,8 +52,6 @@ int main() {
     Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
 
     // Create Spheres
-
-
     std::vector<Hittable> hitObjects = {
                 {
             glm::vec3(-1.0f,   0.0f, -1.0f),
@@ -89,7 +87,9 @@ int main() {
         }
     };
 
-
+    // Setup Camera
+    Camera cam;
+    
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;
     glGenVertexArrays(1, &vao);
@@ -97,8 +97,7 @@ int main() {
 
     shaderProgram.use();
 
-
-
+    cam.setUniforms(shaderProgram.m_ProgramId);
 
     // Apply constant uniforms
     int locCount = glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount");
@@ -112,8 +111,6 @@ int main() {
         glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(hitObjects[i].m_Albedo));
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.refraction_index").c_str()), hitObjects[i].m_Refraction_Index);
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.fuzz").c_str()), hitObjects[i].m_Fuzz);
-
-
     }
     shaderProgram.setInt("SCR_HEIGHT", SCR_HEIGHT);
     shaderProgram.setInt("SCR_WIDTH", SCR_WIDTH);
@@ -148,6 +145,8 @@ int main() {
         // Generate a random seed for the shader
         float seed = random_float();
         shaderProgram.setFloat("uSeed",  seed);
+        cam.setUniforms(shaderProgram.m_ProgramId);
+
 
         glBindVertexArray(vao);       // bind the VAO
         glDrawArrays(GL_TRIANGLES, 0, 3);

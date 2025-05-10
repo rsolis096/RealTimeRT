@@ -36,6 +36,13 @@ struct Interval {
     float max;
 };
 
+struct Camera {
+    float vfov;
+    vec3 lookfrom; 
+    vec3 lookat;
+    vec3 vup;
+};
+
 /* Constants*/
 const int MAX_HITTABLES = 16;
 const float POS_MAX = 3.402823466e+38;
@@ -43,6 +50,7 @@ const float NEG_MAX = -3.402823466e+38;
 const float pi = 3.14159265358979323846;
 
 /* Uniforms */
+uniform Camera cam;
 uniform int   hittableCount;
 uniform Hittable hittables[MAX_HITTABLES];
 uniform float uSeed; // Time used for random vallue seeding
@@ -337,17 +345,17 @@ vec3 update_camera(vec2 uv){
 
     // Initialize the camera
     //vec3 lookfrom = vec3(-2,2,1);
-    vec3 lookat   = vec3(0,0,-1);
-    vec3 vup      = vec3(0,1,0); // What is considered up
-    float vfov    = 20;
+    //vec3 lookat   = vec3(0,0,-1);
+    //vec3 vup      = vec3(0,1,0); // What is considered up
+    //float vfov    = 20;
 
-    vec3 camDir = normalize(lookfrom - lookat);
-    vec3 camRight = normalize(cross(vup, camDir));
+    vec3 camDir = normalize(cam.lookfrom - cam.lookat);
+    vec3 camRight = normalize(cross(cam.vup, camDir));
     vec3 camUp = cross(camDir, camRight); // What is considered up relative to cam
 
 
     float aspect      = float(resolution.x) / float(resolution.y);
-    float theta       = radians(vfov);
+    float theta       = radians(cam.vfov);
     float half_h      = tan(theta * 0.5); // half-height of the image plane
     float half_w      = aspect * half_h; // Adjust width for to keep aspect ratio
 
