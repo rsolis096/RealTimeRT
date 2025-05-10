@@ -58,7 +58,7 @@ int main() {
                 {
             glm::vec3(-1.0f,   0.0f, -1.0f),
             glm::vec3(0.8f,   0.8f,  0.8f),
-             0.5f, (1.00 / 1.33),
+             0.5f, (1.5),
             DIELECTRIC
         },
         {
@@ -79,6 +79,13 @@ int main() {
             glm::vec3(0.8f,   0.6f,  0.2f),
              0.5f, 1,
             METAL, 0.3f
+        },
+
+        {
+            glm::vec3(-1.0,    0.0, -1.0),
+            glm::vec3(0.8f,   0.6f,  0.2f),
+             0.4f, (1.00 / 1.50),
+            DIELECTRIC
         }
     };
 
@@ -89,6 +96,8 @@ int main() {
     glBindVertexArray(vao);
 
     shaderProgram.use();
+
+
 
 
     // Apply constant uniforms

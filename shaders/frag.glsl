@@ -36,10 +36,11 @@ struct Interval {
     float max;
 };
 
-/* Constants */
+/* Constants*/
 const int MAX_HITTABLES = 16;
 const float POS_MAX = 3.402823466e+38;
 const float NEG_MAX = -3.402823466e+38;
+const float pi = 3.14159265358979323846;
 
 /* Uniforms */
 uniform int   hittableCount;
@@ -48,7 +49,16 @@ uniform float uSeed; // Time used for random vallue seeding
 uniform int SCR_WIDTH;
 uniform int SCR_HEIGHT;
 
+/* Globals */
+ivec2 resolution = ivec2(SCR_WIDTH, SCR_HEIGHT);
+vec3 lookfrom = vec3(-2,2,1);
+
+
 /* Utilities & Implementations */
+
+float degrees_to_radians(float degrees) {
+    return degrees * pi / 180.0;
+}
 
 float size(Interval i)  {
     return i.max - i.min;
@@ -171,6 +181,13 @@ bool near_zero(vec3 v) {
     return all( lessThan( abs(v), vec3(s) ) );
 }
 
+float reflectance(float cosine, float refraction_index) {
+        // Use Schlick's approximation for reflectance.
+        float r0 = (1 - refraction_index) / (1 + refraction_index);
+        r0 = r0*r0;
+        return r0 + (1-r0)* pow((1 - cosine),5);
+    }
+
 // Material Scattering
 bool scatter(
     in  Ray        r_in,        // incoming ray (read-only)
@@ -221,7 +238,7 @@ bool scatter(
         bool cannot_refract = ri * sin_theta > 1.0;
         vec3 direction;
 
-        if (cannot_refract)
+        if (cannot_refract || reflectance(cos_theta, ri) > random_float(gl_FragCoord.xy))
             direction = reflect(unit_direction, rec.normal);
         else
             direction = refract(unit_direction, rec.normal, ri);
@@ -264,7 +281,7 @@ bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable o
         return true;
 }
 
-const int MAX_DEPTH = 10;
+const int MAX_DEPTH = 25;
 
 vec3 ray_color(Ray r) {
     vec3 throughput = vec3(1.0);   // cumulative attenuation
@@ -308,19 +325,55 @@ vec3 ray_color(Ray r) {
             // continue tracing the scattered ray
             r = scattered;
         }
+
+
+
     }
 
     return result;
 }
 
-void main() {
-    ivec2 resolution = ivec2(SCR_WIDTH, SCR_HEIGHT);
-    vec3  cam_origin = vec3(0.0);
+vec3 update_camera(vec2 uv){
 
-    int   samples = 100;
+    // Initialize the camera
+    //vec3 lookfrom = vec3(-2,2,1);
+    vec3 lookat   = vec3(0,0,-1);
+    vec3 vup      = vec3(0,1,0); // What is considered up
+    float vfov    = 20;
+
+    vec3 camDir = normalize(lookfrom - lookat);
+    vec3 camRight = normalize(cross(vup, camDir));
+    vec3 camUp = cross(camDir, camRight); // What is considered up relative to cam
+
+
+    float aspect      = float(resolution.x) / float(resolution.y);
+    float theta       = radians(vfov);
+    float half_h      = tan(theta * 0.5); // half-height of the image plane
+    float half_w      = aspect * half_h; // Adjust width for to keep aspect ratio
+
+    vec3 lower_left  = lookfrom
+                     - half_w * camRight
+                     - half_h * camUp
+                     - camDir;
+
+    vec3 horizontal  = 2.0 * half_w * camRight;
+    vec3 vertical    = 2.0 * half_h * camUp;
+
+
+    return lower_left 
+        + uv.x * horizontal   
+        + uv.y * vertical;
+
+}
+
+void main() {
+
+    // Initialize ray tracing properties
+    int   samples = 10;
     vec3  pixel_color = vec3(0.0);
 
     for (int i = 0; i < samples; ++i) {
+
 
         // 1) Create a seed for jitter vec generation
         float fi = float(i);
@@ -338,26 +391,19 @@ void main() {
         // 4) Convert pixel coords to UV coords
         vec2 uv = pixel_coords / vec2(resolution);
 
-        // Transform y to make image upright as per RTOW
-        uv.y = 1.0 - uv.y; 
 
-        float aspect = float(resolution.x) / float(resolution.y);
-        float ndcX = 2.0 * uv.x - 1.0;    // map uv.x from [0,1] -> [-1,1]
-        float ndcY = 1.0 - 2.0 * uv.y;    // map uv.y from [0,1] -> [1,-1] 
+        vec3 filmPoint = update_camera(uv);
+        vec3 dir       = normalize(filmPoint - lookfrom);
+        Ray  r         = make_ray(lookfrom, dir);
 
-        vec3  dir = normalize(vec3(
-            ndcX * aspect,
-            ndcY,
-            -1.0
-        ));
-
-        // 5) Trace Ray
-        Ray r = make_ray(cam_origin, dir);
         pixel_color += ray_color(r);
     }
 
+
     // 6) average
     pixel_color /= float(samples);
+
+
 
     vec3 gammaCorrected = pow(pixel_color, vec3(1.0/2.2));
 
