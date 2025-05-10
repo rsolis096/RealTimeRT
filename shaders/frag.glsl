@@ -13,6 +13,8 @@ struct Ray {
 struct Material {
     int type;
     vec3 albedo;
+    float refraction_index;
+    float fuzz;
 };
 
 struct hit_record {
@@ -156,6 +158,13 @@ vec3 reflect(vec3 v, vec3 n) {
     return v - 2*dot(v,n)*n;
 }
 
+vec3 refract_custom(vec3 uv, vec3 n, float etai_over_etat) {
+    float cos_theta = min(dot(-uv, n), 1.0);
+    vec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
+    vec3 r_out_parallel = -sqrt(abs(1.0 - dot(r_out_perp, r_out_perp))) * n;
+    return r_out_perp + r_out_parallel;
+}
+
 bool near_zero(vec3 v) {
     const float s = 1e-8;
     // abs(v) < vec3(s) yields a bvec3, and all(...) checks all components
@@ -191,11 +200,34 @@ bool scatter(
     // Metal
     if(rec.mat.type == 1) {
         vec3 reflected = reflect(r_in.direction, rec.normal);
-        
+        reflected = normalize(reflected) + (rec.mat.fuzz * random_unit_vector());
+
         scattered.origin = rec.point;
         scattered.direction = reflected;
 
         attenuation = rec.mat.albedo;
+        return (dot(scattered.direction, rec.normal) > 0);
+    }
+
+    // Dielectric
+    if(rec.mat.type == 2){
+        attenuation = vec3(1.0);
+        float ri = rec.front_face ? (1.0/rec.mat.refraction_index) : rec.mat.refraction_index;
+
+        vec3 unit_direction = normalize(r_in.direction);
+        float cos_theta = min(dot(-unit_direction, rec.normal), 1.0);
+        float sin_theta = sqrt(1.0 - cos_theta*cos_theta);
+
+        bool cannot_refract = ri * sin_theta > 1.0;
+        vec3 direction;
+
+        if (cannot_refract)
+            direction = reflect(unit_direction, rec.normal);
+        else
+            direction = refract(unit_direction, rec.normal, ri);
+
+        scattered.origin = rec.point;
+        scattered.direction = direction;
         return true;
     }
 

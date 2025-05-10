@@ -58,27 +58,27 @@ int main() {
                 {
             glm::vec3(-1.0f,   0.0f, -1.0f),
             glm::vec3(0.8f,   0.8f,  0.8f),
-             0.5f,
-            METAL
+             0.5f, (1.00 / 1.33),
+            DIELECTRIC
         },
         {
             glm::vec3(0.0f, -100.5f, -1.0f),  // position
             glm::vec3(0.8f,   0.8f,  0.0f),  // albedo
-            100.0f,                              // radius
+            100.0f,  1,                        // radius
             LAMBERTIAN                          // material
         },
         {
             glm::vec3(0.0f,   0.0f, -1.2f),
             glm::vec3(0.1f,   0.2f,  0.5f),
-             0.5f,
+             0.5f, 1,
             LAMBERTIAN
         },
 
         {
             glm::vec3(1.0f,   0.0f, -1.0f),
             glm::vec3(0.8f,   0.6f,  0.2f),
-             0.5f,
-            METAL
+             0.5f, 1,
+            METAL, 0.3f
         }
     };
 
@@ -101,6 +101,9 @@ int main() {
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].m_Radius);
         glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), hitObjects[i].m_Type);
         glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(hitObjects[i].m_Albedo));
+        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.refraction_index").c_str()), hitObjects[i].m_Refraction_Index);
+        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.fuzz").c_str()), hitObjects[i].m_Fuzz);
+
 
     }
     shaderProgram.setInt("SCR_HEIGHT", SCR_HEIGHT);
