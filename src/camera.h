@@ -11,8 +11,8 @@ class Camera {
 public:
     Camera();
     void setUniforms(GLuint program_id);
-    void processMouse(float xoffset, float yoffset);
-    void processKeyboard(float changeValue, unsigned int keyPressed);
+    void processMouse(double xoffset, double yoffset);
+    void processKeyboard(double delta, unsigned int key);
     glm::vec3 m_LookFrom; // Cam location
     glm::vec3 m_LookAt;// Look at location
     glm::vec3 m_Up;// What is considered up

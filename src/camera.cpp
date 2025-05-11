@@ -16,7 +16,7 @@ Camera::Camera() {
 
 void Camera::setUniforms(GLuint program_id)
 {
-    //used called before setunfiroms is called
+    //TODO: Clean this up. program.used called before setunfiroms is called 
     //m_LookAt += 0.0001;
     std::string base = "cam.";
     glUniform3fv(glGetUniformLocation(program_id, (base + "lookfrom").c_str()), 1, glm::value_ptr(m_LookFrom));
@@ -25,12 +25,8 @@ void Camera::setUniforms(GLuint program_id)
     glUniform1f(glGetUniformLocation(program_id, (base + "vfov").c_str()), m_Fov);
 }
 
-void Camera::processMouse(float xoffset, float yoffset)
+void Camera::processMouse(double xoffset, double yoffset)
 {
-    // Slow down the mouse a bit
-    yoffset *= 0.5f;
-    xoffset *= 0.5f;
-
     m_Yaw += xoffset;
     m_Pitch += yoffset;
 
@@ -46,18 +42,21 @@ void Camera::processMouse(float xoffset, float yoffset)
     
 }
 
-void Camera::processKeyboard(float delta, unsigned int key)
+void Camera::processKeyboard(double delta, unsigned int key)
 {
-    printf("Process keyboard called!\n");
+    //printf("Process keyboard called!\n");
     glm::vec3 front = glm::normalize(m_LookAt - m_LookFrom);
     glm::vec3 right = glm::normalize(cross(front, m_Up));
 
-    if (key == GLFW_KEY_W)       m_LookFrom += front * delta;
-    else if (key == GLFW_KEY_S)  m_LookFrom -= front * delta;
-    else if (key == GLFW_KEY_D)  m_LookFrom += right * delta;
-    else if (key == GLFW_KEY_A)  m_LookFrom -= right * delta;
-    else if (key == GLFW_KEY_SPACE)         m_LookFrom.y += delta;
-    else if (key == GLFW_KEY_LEFT_CONTROL)  m_LookFrom.y -= delta;
+    // delta is provided as a double from GLFW so safely cast it to float
+    float d = static_cast<float>(delta);
+
+    if (key == GLFW_KEY_W)       m_LookFrom += front * d;
+    else if (key == GLFW_KEY_S)  m_LookFrom -= front * d;
+    else if (key == GLFW_KEY_D)  m_LookFrom += right * d;
+    else if (key == GLFW_KEY_A)  m_LookFrom -= right * d;
+    else if (key == GLFW_KEY_SPACE)         m_LookFrom.y -= d;
+    else if (key == GLFW_KEY_LEFT_CONTROL)  m_LookFrom.y += d;
 
     m_LookAt = m_LookFrom + front;
 

@@ -13,52 +13,35 @@
 #include "utilities.h"
 #include "Hittable.h"
 
-float mouseX = 0, mouseY = 0; //Save cursor position when gui is opened
-float lastX = Camera::SCR_WIDTH / 2.0f;
-float lastY = Camera::SCR_HEIGHT / 2.0f;
-float xpos = 0, ypos = 0;
+double lastX = static_cast<double>(static_cast<double>(Camera::SCR_WIDTH) / 2.0f);
+double lastY = static_cast<double>(static_cast<double>(Camera::SCR_HEIGHT) / 2.0f);
 bool firstMouse = true;
 Camera cam;
 
 
 
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
-    //Only change camera if cursor is locked
-
-
-    //If this call is immedietly after unlock/lock, set mouse to previous position before unlock (mouseX and mouseY)
-    if (mouseX != 0 && mouseY != 0)
-    {
-        xpos = static_cast<float>(mouseX);
-        ypos = static_cast<float>(mouseY);
-        mouseX = 0;
-        mouseY = 0;
-    }
-    //if this call is done during cursor lock, set mouse position to new xposIn, yposIn
-    else
-    {
-        xpos = static_cast<float>(xposIn);
-        ypos = static_cast<float>(yposIn);
-    }
-
+    // Used to prevent mouse snapping on program start
     if (firstMouse)
     {
-        lastX = xpos;
-        lastY = ypos;
+        lastX = mouse_x;
+        lastY = mouse_y;
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    // Compute the change in mouse position
+    double delta_x = mouse_x - lastX;
+    double delta_y = lastY - mouse_y; // reversed since y-coordinates go from bottom to top
 
-    lastX = xpos;
-    lastY = ypos;
+    lastX = mouse_x;
+    lastY = mouse_y;
 
-    //std::cout << "Current Mouse: " << xoffset << ", " << yoffset << std::endl;
+    const double sensitivity = 0.3;
+    delta_x *= sensitivity;
+    delta_y *= sensitivity;
 
-    cam.processMouse(xoffset, yoffset);
-    
+    cam.processMouse(delta_x, delta_y);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -84,6 +67,17 @@ void processInput(GLFWwindow* window, double deltaTime) {
     //Right
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         cam.processKeyboard(cameraSpeed, GLFW_KEY_D);
+
+    //Up
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        cam.processKeyboard(deltaTime, GLFW_KEY_SPACE);
+    //Down
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        cam.processKeyboard(deltaTime, GLFW_KEY_LEFT_CONTROL);
+
+    // End program
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }
 
 
