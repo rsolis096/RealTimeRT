@@ -13,6 +13,79 @@
 #include "utilities.h"
 #include "Hittable.h"
 
+float mouseX = 0, mouseY = 0; //Save cursor position when gui is opened
+float lastX = Camera::SCR_WIDTH / 2.0f;
+float lastY = Camera::SCR_HEIGHT / 2.0f;
+float xpos = 0, ypos = 0;
+bool firstMouse = true;
+Camera cam;
+
+
+
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    //Only change camera if cursor is locked
+
+
+    //If this call is immedietly after unlock/lock, set mouse to previous position before unlock (mouseX and mouseY)
+    if (mouseX != 0 && mouseY != 0)
+    {
+        xpos = static_cast<float>(mouseX);
+        ypos = static_cast<float>(mouseY);
+        mouseX = 0;
+        mouseY = 0;
+    }
+    //if this call is done during cursor lock, set mouse position to new xposIn, yposIn
+    else
+    {
+        xpos = static_cast<float>(xposIn);
+        ypos = static_cast<float>(yposIn);
+    }
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    //std::cout << "Current Mouse: " << xoffset << ", " << yoffset << std::endl;
+
+    cam.processMouse(xoffset, yoffset);
+    
+}
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    std::cout << "resize window called" << std::endl;
+    Camera::SCR_WIDTH = width;
+    Camera::SCR_HEIGHT = height;
+    glViewport(0, 0, width, height);
+}
+
+void processInput(GLFWwindow* window, double deltaTime) {
+
+    //Forward
+    double cameraSpeed = -2.5f * deltaTime; //inverted fir cirrect moiveoment
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cam.processKeyboard(cameraSpeed, GLFW_KEY_W);
+    //Backward
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cam.processKeyboard(cameraSpeed, GLFW_KEY_S);
+    //Left
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cam.processKeyboard(cameraSpeed, GLFW_KEY_A);
+    //Right
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cam.processKeyboard(cameraSpeed, GLFW_KEY_D);
+}
+
 
 int main() {
 
@@ -29,7 +102,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL Version Check", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(Camera::SCR_WIDTH, Camera::SCR_HEIGHT, "OpenGL Version Check", nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -38,6 +111,15 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
+    // Used to update window size
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    //Enable cursor and scroll wheel input
+    glfwSetCursorPosCallback(window, mouse_callback);
+
+    //Enable mouse input (This disables the mouse and locks it to screen)
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     // Load OpenGL functions using GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD\n";
@@ -45,7 +127,7 @@ int main() {
     }
 
     // Specify viewport of OpenGL
-    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+    glViewport(0, 0, Camera::SCR_WIDTH, Camera::SCR_HEIGHT);
 
 
     // Shader
@@ -86,9 +168,6 @@ int main() {
             DIELECTRIC
         }
     };
-
-    // Setup Camera
-    Camera cam;
     
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;
@@ -112,8 +191,8 @@ int main() {
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.refraction_index").c_str()), hitObjects[i].m_Refraction_Index);
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.fuzz").c_str()), hitObjects[i].m_Fuzz);
     }
-    shaderProgram.setInt("SCR_HEIGHT", SCR_HEIGHT);
-    shaderProgram.setInt("SCR_WIDTH", SCR_WIDTH);
+    shaderProgram.setInt("SCR_HEIGHT", Camera::SCR_HEIGHT);
+    shaderProgram.setInt("SCR_WIDTH", Camera::SCR_WIDTH);
 
     // Init Camera
     //Camera cam;
@@ -157,6 +236,9 @@ int main() {
         glfwPollEvents();
 
         double endTime = glfwGetTime();
+
+        double deltaTime = startTime - endTime;
+        processInput(window, deltaTime);
 
         //std::cout << (int)(1 / (endTime - startTime)) << "\r";
 

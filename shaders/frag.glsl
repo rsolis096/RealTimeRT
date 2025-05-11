@@ -59,7 +59,6 @@ uniform int SCR_HEIGHT;
 
 /* Globals */
 ivec2 resolution = ivec2(SCR_WIDTH, SCR_HEIGHT);
-vec3 lookfrom = vec3(-2,2,1);
 
 
 /* Utilities & Implementations */
@@ -344,10 +343,6 @@ vec3 ray_color(Ray r) {
 vec3 update_camera(vec2 uv){
 
     // Initialize the camera
-    //vec3 lookfrom = vec3(-2,2,1);
-    //vec3 lookat   = vec3(0,0,-1);
-    //vec3 vup      = vec3(0,1,0); // What is considered up
-    //float vfov    = 20;
 
     vec3 camDir = normalize(cam.lookfrom - cam.lookat);
     vec3 camRight = normalize(cross(cam.vup, camDir));
@@ -359,7 +354,7 @@ vec3 update_camera(vec2 uv){
     float half_h      = tan(theta * 0.5); // half-height of the image plane
     float half_w      = aspect * half_h; // Adjust width for to keep aspect ratio
 
-    vec3 lower_left  = lookfrom
+    vec3 lower_left  = cam.lookfrom
                      - half_w * camRight
                      - half_h * camUp
                      - camDir;
@@ -401,8 +396,8 @@ void main() {
 
 
         vec3 filmPoint = update_camera(uv);
-        vec3 dir       = normalize(filmPoint - lookfrom);
-        Ray  r         = make_ray(lookfrom, dir);
+        vec3 dir       = normalize(filmPoint - cam.lookfrom);
+        Ray  r         = make_ray(cam.lookfrom, dir);
 
         pixel_color += ray_color(r);
     }
