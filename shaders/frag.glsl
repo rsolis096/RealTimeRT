@@ -46,12 +46,14 @@ struct Camera {
 };
 
 /* Constants*/
-const int MAX_HITTABLES = 16;
+const int MAX_HITTABLES = 100;
 const float POS_MAX = 3.402823466e+38;   // Max positive float
 const float NEG_MAX = -3.402823466e+38;  // Max negative float
 const float pi = 3.14159265358979323846;
 vec3   defocus_disk_u;       // Disk X basis for defocus
 vec3   defocus_disk_v;       // Disk Y basis for defocus
+const int   samples = 5;
+const int MAX_DEPTH = 15;
 
 /* Uniforms */
 uniform Camera cam;
@@ -314,7 +316,6 @@ bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable o
         return true;
 }
 
-const int MAX_DEPTH = 25;
 
 vec3 ray_color(Ray r) {
     vec3 throughput = vec3(1.0);   // cumulative attenuation
@@ -400,7 +401,6 @@ vec3 update_camera(vec2 uv){
 void main() {
 
     // Initialize ray tracing properties
-    int   samples = 10;
     vec3  pixel_color = vec3(0.0);
 
     for (int i = 0; i < samples; ++i) {

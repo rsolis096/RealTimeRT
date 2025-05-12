@@ -28,8 +28,6 @@ public:
     // Camera Input
     void processInput(GLFWwindow* window, double deltaTime);
 
-private:
-
 };
 
 

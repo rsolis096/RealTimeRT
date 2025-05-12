@@ -145,41 +145,50 @@ int main() {
     // Shader
     Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
 
-    // Create Spheres
-    std::vector<Hittable> hitObjects = {
-                {
-            glm::vec3(-1.0f,   0.0f, -1.0f),
-            glm::vec3(0.8f,   0.8f,  0.8f),
-             0.5f, (1.5),
-            DIELECTRIC
-        },
-        {
-            glm::vec3(0.0f, -100.5f, -1.0f),  // position
-            glm::vec3(0.8f,   0.8f,  0.0f),  // albedo
-            100.0f,  1,                        // radius
-            LAMBERTIAN                          // material
-        },
-        {
-            glm::vec3(0.0f,   0.0f, -1.2f),
-            glm::vec3(0.1f,   0.2f,  0.5f),
-             0.5f, 1,
-            LAMBERTIAN
-        },
+    // Create the scene
+    std::vector<Hittable> hitObjects;
+    Material ground_material(glm::vec3(0.5, 0.5, 0.5));
+    hitObjects.push_back(Hittable(glm::vec3(0, -1000, 0), 1000, ground_material));
 
-        {
-            glm::vec3(1.0f,   0.0f, -1.0f),
-            glm::vec3(0.8f,   0.6f,  0.2f),
-             0.5f, 1,
-            METAL, 0.3f
-        },
+    for (int a = -4; a < 4; a++) {
+        for (int b = -4; b < 4; b++) {
+            float choose_mat = random_float();
+            glm::vec3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
 
-        {
-            glm::vec3(-1.0,    0.0, -1.0),
-            glm::vec3(0.8f,   0.6f,  0.2f),
-             0.4f, (1.00 / 1.50),
-            DIELECTRIC
+            if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
+                Material sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    glm::vec3 albedo = random_vec() * random_vec();
+                    sphere_material.m_Albedo = albedo;
+                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                }
+                else if (choose_mat < 0.95) {
+                    // metal
+                    glm::vec3 albedo = random_vec(0.5, 1);
+                    float fuzz = random_float(0, 0.5);
+                    sphere_material = Material(albedo, fuzz);
+                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                }
+                else {
+                    // glass
+                    sphere_material = Material(1.5);
+                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                }
+            }
         }
-    };
+    }
+
+    Material material1(1.5);
+    hitObjects.push_back(Hittable(glm::vec3(0, 1, 0), 1.0, material1));
+
+    Material material2(glm::vec3(0.4, 0.2, 0.1));
+    hitObjects.push_back(Hittable(glm::vec3(-4, 1, 0), 1.0, material2));
+
+    Material material3(glm::vec3(0.7, 0.6, 0.5), 0.0);
+    hitObjects.push_back(Hittable(glm::vec3(4, 1, 0), 1.0, material3));
+
     
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;
@@ -198,10 +207,10 @@ int main() {
         std::string base = "hittables[" + std::to_string(i) + "].";
         glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].m_Position));
         glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].m_Radius);
-        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), hitObjects[i].m_Type);
-        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(hitObjects[i].m_Albedo));
-        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.refraction_index").c_str()), hitObjects[i].m_Refraction_Index);
-        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.fuzz").c_str()), hitObjects[i].m_Fuzz);
+        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), hitObjects[i].m_Mat.m_Type);
+        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(hitObjects[i].m_Mat.m_Albedo));
+        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.refraction_index").c_str()), hitObjects[i].m_Mat.m_RefractionIndex);
+        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.fuzz").c_str()), hitObjects[i].m_Mat.m_Fuzz);
     }
     shaderProgram.setInt("SCR_HEIGHT", Camera::SCR_HEIGHT);
     shaderProgram.setInt("SCR_WIDTH", Camera::SCR_WIDTH);

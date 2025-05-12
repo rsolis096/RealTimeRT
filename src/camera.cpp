@@ -5,15 +5,15 @@ unsigned int Camera::SCR_HEIGHT = 720;
 
 Camera::Camera() {
 
-    m_LookFrom = glm::vec3(-2, 2, 1);;
-    m_LookAt   = glm::vec3(0, 0, -1);
+    m_LookFrom = glm::vec3(13, 2, 3);
+    m_LookAt   = glm::vec3(0, 0, 0);
     m_Up      = glm::vec3(0, 1, 0);
-    m_Fov    = 60.f;
+    m_Fov    = 20.f;
 
     m_Yaw = -90.f;
     m_Pitch = 0.f;
 
-    m_DefocusAngle = 0.f;
+    m_DefocusAngle = 0.6f;
     m_FocusDist = 10.;
 }
 
