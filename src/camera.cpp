@@ -17,7 +17,6 @@ Camera::Camera() {
 void Camera::setUniforms(GLuint program_id)
 {
     //TODO: Clean this up. program.used called before setunfiroms is called 
-    //m_LookAt += 0.0001;
     std::string base = "cam.";
     glUniform3fv(glGetUniformLocation(program_id, (base + "lookfrom").c_str()), 1, glm::value_ptr(m_LookFrom));
     glUniform3fv(glGetUniformLocation(program_id, (base + "lookat").c_str()), 1, glm::value_ptr(m_LookAt));
@@ -55,9 +54,38 @@ void Camera::processKeyboard(double delta, unsigned int key)
     else if (key == GLFW_KEY_S)  m_LookFrom -= front * d;
     else if (key == GLFW_KEY_D)  m_LookFrom += right * d;
     else if (key == GLFW_KEY_A)  m_LookFrom -= right * d;
-    else if (key == GLFW_KEY_SPACE)         m_LookFrom.y -= d;
-    else if (key == GLFW_KEY_LEFT_CONTROL)  m_LookFrom.y += d;
+    else if (key == GLFW_KEY_SPACE)         m_LookFrom.y += d;
+    else if (key == GLFW_KEY_LEFT_CONTROL)  m_LookFrom.y -= d;
 
     m_LookAt = m_LookFrom + front;
 
+}
+
+
+void Camera::processInput(GLFWwindow* window, double deltaTime) {
+
+    //Forward
+    double cameraSpeed = 2.5f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        processKeyboard(cameraSpeed, GLFW_KEY_W);
+    //Backward
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        processKeyboard(cameraSpeed, GLFW_KEY_S);
+    //Left
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        processKeyboard(cameraSpeed, GLFW_KEY_A);
+    //Right
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        processKeyboard(cameraSpeed, GLFW_KEY_D);
+
+    //Up
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        processKeyboard(deltaTime, GLFW_KEY_SPACE);
+    //Down
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        processKeyboard(deltaTime, GLFW_KEY_LEFT_CONTROL);
+
+    // End program
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }

@@ -1,5 +1,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
+
+
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -13,12 +15,58 @@
 #include "utilities.h"
 #include "Hittable.h"
 
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+Camera cam;
+
+bool show_demo_window = true;
+bool show_another_window = false;
+ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+double deltaTime = 0.0;
+
+// Mouse location properties
 double lastX = static_cast<double>(static_cast<double>(Camera::SCR_WIDTH) / 2.0f);
 double lastY = static_cast<double>(static_cast<double>(Camera::SCR_HEIGHT) / 2.0f);
 bool firstMouse = true;
-Camera cam;
 
+void init_gui(GLFWwindow* window) {
 
+    // Setup ImGUI context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); //Input/Output allowing user and gui interactions
+
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init();
+
+    //GUI::isWindowHidden = true;
+}
+
+void display_gui() {
+
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // Rendering
+    // (Your code clears your framebuffer, renders your other stuff etc.)
+    ImGui::Begin("OpenGL Project");
+    ImGui::Text("%.3f fps", (1.f / deltaTime));
+
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+}
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
@@ -46,40 +94,10 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    std::cout << "resize window called" << std::endl;
     Camera::SCR_WIDTH = width;
     Camera::SCR_HEIGHT = height;
     glViewport(0, 0, width, height);
 }
-
-void processInput(GLFWwindow* window, double deltaTime) {
-
-    //Forward
-    double cameraSpeed = -2.5f * deltaTime; //inverted fir cirrect moiveoment
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cam.processKeyboard(cameraSpeed, GLFW_KEY_W);
-    //Backward
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cam.processKeyboard(cameraSpeed, GLFW_KEY_S);
-    //Left
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cam.processKeyboard(cameraSpeed, GLFW_KEY_A);
-    //Right
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cam.processKeyboard(cameraSpeed, GLFW_KEY_D);
-
-    //Up
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        cam.processKeyboard(deltaTime, GLFW_KEY_SPACE);
-    //Down
-    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-        cam.processKeyboard(deltaTime, GLFW_KEY_LEFT_CONTROL);
-
-    // End program
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
-
 
 int main() {
 
@@ -204,6 +222,9 @@ int main() {
 
     std::vector<float> uRandom = {0,0,0,0};
 
+
+    init_gui(window);
+
     while (!glfwWindowShouldClose(window)) {
             
 
@@ -226,14 +247,17 @@ int main() {
         glBindVertexArray(0);
 
 
+        // Display DearImGui
+        display_gui();
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
 
+
         double endTime = glfwGetTime();
-
-        double deltaTime = startTime - endTime;
-        processInput(window, deltaTime);
-
+        deltaTime = endTime - startTime;
+        cam.processInput(window, deltaTime);
         //std::cout << (int)(1 / (endTime - startTime)) << "\r";
 
     }
