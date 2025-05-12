@@ -19,8 +19,8 @@ public:
     float m_Fov;
     float m_Yaw;
     float m_Pitch;
-    //float m_MovementSpeed;
-    //float m_MouseSensitivity;
+    float m_DefocusAngle;
+    float m_FocusDist;
 
     static unsigned int SCR_WIDTH;
     static unsigned int SCR_HEIGHT;

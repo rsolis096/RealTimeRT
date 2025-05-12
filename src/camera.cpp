@@ -8,10 +8,13 @@ Camera::Camera() {
     m_LookFrom = glm::vec3(-2, 2, 1);;
     m_LookAt   = glm::vec3(0, 0, -1);
     m_Up      = glm::vec3(0, 1, 0);
-    m_Fov    = 60;
+    m_Fov    = 60.f;
 
-    m_Yaw = -90.0f;
-    m_Pitch = 0.0f;
+    m_Yaw = -90.f;
+    m_Pitch = 0.f;
+
+    m_DefocusAngle = 0.f;
+    m_FocusDist = 10.;
 }
 
 void Camera::setUniforms(GLuint program_id)
@@ -22,6 +25,9 @@ void Camera::setUniforms(GLuint program_id)
     glUniform3fv(glGetUniformLocation(program_id, (base + "lookat").c_str()), 1, glm::value_ptr(m_LookAt));
     glUniform3fv(glGetUniformLocation(program_id, (base + "vup").c_str()), 1, glm::value_ptr(m_Up));
     glUniform1f(glGetUniformLocation(program_id, (base + "vfov").c_str()), m_Fov);
+    glUniform1f(glGetUniformLocation(program_id, (base + "defocus_angle").c_str()), m_DefocusAngle);
+    glUniform1f(glGetUniformLocation(program_id, (base + "focus_dist").c_str()), m_FocusDist);
+
 }
 
 void Camera::processMouse(double xoffset, double yoffset)

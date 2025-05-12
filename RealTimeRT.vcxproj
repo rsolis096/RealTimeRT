@@ -40,7 +40,6 @@
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Hittable.h" />
-    <ClInclude Include="src\Input.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\utilities.h" />
