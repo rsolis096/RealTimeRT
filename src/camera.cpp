@@ -10,8 +10,10 @@ Camera::Camera() {
     m_Up      = glm::vec3(0, 1, 0);
     m_Fov    = 20.f;
 
-    m_Yaw = -90.f;
-    m_Pitch = 0.f;
+    // Initializes Pitch and Yaw to match the direction we should be looking
+    glm::vec3 dir = glm::normalize(m_LookAt - m_LookFrom);
+    m_Pitch = glm::degrees(asin(dir.y));
+    m_Yaw = glm::degrees(atan2(dir.z, dir.x));
 
     m_DefocusAngle = 0.6f;
     m_FocusDist = 10.;
@@ -19,7 +21,7 @@ Camera::Camera() {
 
 void Camera::setUniforms(GLuint program_id)
 {
-    //TODO: Clean this up. program.used called before setunfiroms is called 
+    glUseProgram(program_id);
     std::string base = "cam.";
     glUniform3fv(glGetUniformLocation(program_id, (base + "lookfrom").c_str()), 1, glm::value_ptr(m_LookFrom));
     glUniform3fv(glGetUniformLocation(program_id, (base + "lookat").c_str()), 1, glm::value_ptr(m_LookAt));
@@ -32,9 +34,11 @@ void Camera::setUniforms(GLuint program_id)
 
 void Camera::processMouse(double xoffset, double yoffset)
 {
+
     m_Yaw += xoffset;
     m_Pitch += yoffset;
 
+    // Prevents pitch from flipping the image
     if (m_Pitch > 89.0f)
         m_Pitch = 89.0f;
     if (m_Pitch < -89.0f)
@@ -49,11 +53,9 @@ void Camera::processMouse(double xoffset, double yoffset)
 
 void Camera::processKeyboard(double delta, unsigned int key)
 {
-    //printf("Process keyboard called!\n");
     glm::vec3 front = glm::normalize(m_LookAt - m_LookFrom);
     glm::vec3 right = glm::normalize(cross(front, m_Up));
 
-    // delta is provided as a double from GLFW so safely cast it to float
     float d = static_cast<float>(delta);
 
     if (key == GLFW_KEY_W)       m_LookFrom += front * d;
@@ -70,24 +72,24 @@ void Camera::processKeyboard(double delta, unsigned int key)
 
 void Camera::processInput(GLFWwindow* window, double deltaTime) {
 
-    //Forward
+    // Forward
     double cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         processKeyboard(cameraSpeed, GLFW_KEY_W);
-    //Backward
+    // Backward
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         processKeyboard(cameraSpeed, GLFW_KEY_S);
-    //Left
+    // Left
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         processKeyboard(cameraSpeed, GLFW_KEY_A);
-    //Right
+    // Right
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         processKeyboard(cameraSpeed, GLFW_KEY_D);
 
-    //Up
+    // Up
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         processKeyboard(deltaTime, GLFW_KEY_SPACE);
-    //Down
+    // Down
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         processKeyboard(deltaTime, GLFW_KEY_LEFT_CONTROL);
 

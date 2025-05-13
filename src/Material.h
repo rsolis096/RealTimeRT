@@ -19,12 +19,14 @@ struct Material {
 
 	// Lambertian
 	Material(const glm::vec3& albedo);
+	static Material MakeLambertian(const glm::vec3& albedo);
 
 	// Metal
 	Material(const glm::vec3& albedo, const float fuzz);
+	static Material MakeMetal(const glm::vec3& albedo, const float fuzz);
 
 	// Dielectric
 	Material(const float rf);
-
+	static Material MakeDielectric(const float rf);
 
 };

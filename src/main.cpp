@@ -15,21 +15,16 @@
 #include "utilities.h"
 #include "Hittable.h"
 
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
 Camera cam;
-
-bool show_demo_window = true;
-bool show_another_window = false;
-ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 double deltaTime = 0.0;
 
 // Mouse location properties
-double lastX = static_cast<double>(static_cast<double>(Camera::SCR_WIDTH) / 2.0f);
-double lastY = static_cast<double>(static_cast<double>(Camera::SCR_HEIGHT) / 2.0f);
+double lastX;
+double lastY;
 bool firstMouse = true;
 
 void init_gui(GLFWwindow* window) {
@@ -70,13 +65,6 @@ void display_gui() {
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
-    // Used to prevent mouse snapping on program start
-    if (firstMouse)
-    {
-        lastX = mouse_x;
-        lastY = mouse_y;
-        firstMouse = false;
-    }
 
     // Compute the change in mouse position
     double delta_x = mouse_x - lastX;
@@ -99,8 +87,51 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-int main() {
+void setup_scene(std::vector<Hittable>& hitObjects) {
 
+    Material ground_material = Material::MakeLambertian(glm::vec3(0.5, 0.5, 0.5));
+    hitObjects.push_back(Hittable(glm::vec3(0, -1000, 0), 1000, ground_material));
+
+    for (int a = -4; a < 4; a++) {
+        for (int b = -4; b < 4; b++) {
+            float choose_mat = random_float();
+            glm::vec3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
+
+            if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    glm::vec3 albedo = random_vec() * random_vec();
+                    Material sphere_material = Material::MakeLambertian(albedo);
+                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                }
+                else if (choose_mat < 0.95) {
+                    // metal
+                    glm::vec3 albedo = random_vec(0.5, 1);
+                    float fuzz = random_float(0, 0.5);
+                    Material sphere_material = Material::MakeMetal(albedo, fuzz);
+                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                }
+                else {
+                    // glass
+                    Material sphere_material = Material::MakeDielectric(1.5);
+                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                }
+            }
+        }
+    }
+
+    Material material1 = Material::MakeDielectric(1.5);
+    hitObjects.push_back(Hittable(glm::vec3(0, 1, 0), 1.0, material1));
+
+    Material material2 = Material::MakeLambertian(glm::vec3(0.4, 0.2, 0.1));
+    hitObjects.push_back(Hittable(glm::vec3(-4, 1, 0), 1.0, material2));
+
+    Material material3 = Material::MakeMetal(glm::vec3(0.7, 0.6, 0.5), 0.0);
+    hitObjects.push_back(Hittable(glm::vec3(4, 1, 0), 1.0, material3));
+}
+
+int main() {
 
     // Initialize GLFW
     if (!glfwInit()) {
@@ -123,14 +154,25 @@ int main() {
 
     glfwMakeContextCurrent(window);
 
-    // Used to update window size
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
 
-    //Enable cursor and scroll wheel input
+        // (2) Warp to center:
+        glfwSetCursorPos(window, width * 0.5, height * 0.5);
+
+        // (3) Now initialize your lastX/lastY from the same center:
+        lastX = width * 0.5;
+        lastY = height * 0.5;
+
+    }
+
+    // Locks cursor to screen, apply callback function
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    //Enable mouse input (This disables the mouse and locks it to screen)
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // Used to update dynamically update window size
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // Load OpenGL functions using GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -141,67 +183,23 @@ int main() {
     // Specify viewport of OpenGL
     glViewport(0, 0, Camera::SCR_WIDTH, Camera::SCR_HEIGHT);
 
-
-    // Shader
+    // Create Shader program
     Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
 
-    // Create the scene
-    std::vector<Hittable> hitObjects;
-    Material ground_material(glm::vec3(0.5, 0.5, 0.5));
-    hitObjects.push_back(Hittable(glm::vec3(0, -1000, 0), 1000, ground_material));
-
-    for (int a = -4; a < 4; a++) {
-        for (int b = -4; b < 4; b++) {
-            float choose_mat = random_float();
-            glm::vec3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
-
-            if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
-                Material sphere_material;
-
-                if (choose_mat < 0.8) {
-                    // diffuse
-                    glm::vec3 albedo = random_vec() * random_vec();
-                    sphere_material.m_Albedo = albedo;
-                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
-                }
-                else if (choose_mat < 0.95) {
-                    // metal
-                    glm::vec3 albedo = random_vec(0.5, 1);
-                    float fuzz = random_float(0, 0.5);
-                    sphere_material = Material(albedo, fuzz);
-                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
-                }
-                else {
-                    // glass
-                    sphere_material = Material(1.5);
-                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
-                }
-            }
-        }
-    }
-
-    Material material1(1.5);
-    hitObjects.push_back(Hittable(glm::vec3(0, 1, 0), 1.0, material1));
-
-    Material material2(glm::vec3(0.4, 0.2, 0.1));
-    hitObjects.push_back(Hittable(glm::vec3(-4, 1, 0), 1.0, material2));
-
-    Material material3(glm::vec3(0.7, 0.6, 0.5), 0.0);
-    hitObjects.push_back(Hittable(glm::vec3(4, 1, 0), 1.0, material3));
-
-    
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    shaderProgram.use();
-
-    cam.setUniforms(shaderProgram.m_ProgramId);
+    // Create the scene
+    std::vector<Hittable> hitObjects;
+    setup_scene(hitObjects);
 
     // Apply constant uniforms
-    int locCount = glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount");
-    glUniform1i(locCount, (int)hitObjects.size());
+    shaderProgram.use();
+
+    // Send scene to fragment shader
+    glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount"), (int)hitObjects.size());
     for (int i = 0; i < hitObjects.size(); ++i) {
         // objects[i].type
         std::string base = "hittables[" + std::to_string(i) + "].";
@@ -215,60 +213,50 @@ int main() {
     shaderProgram.setInt("SCR_HEIGHT", Camera::SCR_HEIGHT);
     shaderProgram.setInt("SCR_WIDTH", Camera::SCR_WIDTH);
 
-    // Init Camera
-    //Camera cam;
-    //cam.initialize();
-
     // Print version info
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLSL Version:   " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
     std::cout << "Vendor:         " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "Renderer:       " << glGetString(GL_RENDERER) << std::endl;
+     
 
-    double previousTime = glfwGetTime();
-
-    // Keep window open until closed
-
-    std::vector<float> uRandom = {0,0,0,0};
-
-
+    // Initialize ImGui
     init_gui(window);
 
+    // Draw Loop
     while (!glfwWindowShouldClose(window)) {
             
 
-        // Measure speed
-        double startTime = glfwGetTime();
+        // Frame rate
+        double frameStart = glfwGetTime();
 
         // Background Color
-        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         shaderProgram.use();
+
         // Generate a random seed for the shader
-        float seed = random_float();
-        shaderProgram.setFloat("uSeed",  seed);
+        shaderProgram.setFloat("uSeed", random_float());
+
+        // Update Camera uniform values
         cam.setUniforms(shaderProgram.m_ProgramId);
 
-
-        glBindVertexArray(vao);       // bind the VAO
+        // VAO is needed even though it does nothing
+        glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
-
 
         // Display DearImGui
         display_gui();
 
-
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-
-        double endTime = glfwGetTime();
-        deltaTime = endTime - startTime;
+        // Compute frame time
+        double frameEnd = glfwGetTime();
+        deltaTime = frameEnd - frameStart;
         cam.processInput(window, deltaTime);
-        //std::cout << (int)(1 / (endTime - startTime)) << "\r";
-
     }
 
     // Cleanup
