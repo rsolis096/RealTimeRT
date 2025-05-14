@@ -52,8 +52,7 @@ const float NEG_MAX = -3.402823466e+38;  // Max negative float
 const float pi = 3.14159265358979323846;
 vec3   defocus_disk_u;       // Disk X basis for defocus
 vec3   defocus_disk_v;       // Disk Y basis for defocus
-const int   samples = 5;
-const int MAX_DEPTH = 15;
+
 
 /* Uniforms */
 uniform Camera cam;
@@ -62,6 +61,8 @@ uniform Hittable hittables[MAX_HITTABLES];
 uniform float uSeed; // Time used for random vallue seeding
 uniform int SCR_WIDTH;
 uniform int SCR_HEIGHT;
+uniform int SAMPLES;;
+uniform int MAX_DEPTH;
 
 /* Globals */
 ivec2 resolution = ivec2(SCR_WIDTH, SCR_HEIGHT);
@@ -403,7 +404,7 @@ void main() {
     // Initialize ray tracing properties
     vec3  pixel_color = vec3(0.0);
 
-    for (int i = 0; i < samples; ++i) {
+    for (int i = 0; i < SAMPLES; ++i) {
 
 
         // 1) Create a seed for jitter vec generation
@@ -432,7 +433,7 @@ void main() {
 
 
     // 6) average
-    pixel_color /= float(samples);
+    pixel_color /= float(SAMPLES);
 
 
 

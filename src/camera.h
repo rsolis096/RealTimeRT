@@ -26,7 +26,7 @@ public:
     static unsigned int SCR_HEIGHT;
 
     // Camera Input
-    void processInput(GLFWwindow* window, double deltaTime);
+    void processCameraInput(GLFWwindow* window, double deltaTime);
 
 };
 

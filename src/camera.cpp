@@ -70,7 +70,7 @@ void Camera::processKeyboard(double delta, unsigned int key)
 }
 
 
-void Camera::processInput(GLFWwindow* window, double deltaTime) {
+void Camera::processCameraInput(GLFWwindow* window, double deltaTime) {
 
     // Forward
     double cameraSpeed = 2.5f * deltaTime;
@@ -93,7 +93,4 @@ void Camera::processInput(GLFWwindow* window, double deltaTime) {
     if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
         processKeyboard(deltaTime, GLFW_KEY_LEFT_CONTROL);
 
-    // End program
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
 }

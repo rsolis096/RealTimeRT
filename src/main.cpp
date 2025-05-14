@@ -15,53 +15,19 @@
 #include "utilities.h"
 #include "Hittable.h"
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "GUI.h"
+
 
 Camera cam;
 double deltaTime = 0.0;
+double debounceThreshold = 0.2;
+bool cursorLocked = true;
+double lastKeyPressTime = 0.0;
 
 // Mouse location properties
 double lastX;
 double lastY;
 bool firstMouse = true;
-
-void init_gui(GLFWwindow* window) {
-
-    // Setup ImGUI context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); //Input/Output allowing user and gui interactions
-
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
-    ImGui_ImplOpenGL3_Init();
-
-    //GUI::isWindowHidden = true;
-}
-
-void display_gui() {
-
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    // Rendering
-    // (Your code clears your framebuffer, renders your other stuff etc.)
-    ImGui::Begin("OpenGL Project");
-    ImGui::Text("%.3f fps", (1.f / deltaTime));
-
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-}
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
@@ -77,7 +43,41 @@ void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
     delta_x *= sensitivity;
     delta_y *= sensitivity;
 
-    cam.processMouse(delta_x, delta_y);
+    if(!isWindowHidden)
+        cam.processMouse(delta_x, delta_y);
+}
+
+void processInput(GLFWwindow* window, double deltaTime) {
+
+    if (glfwGetKey(window, GLFW_KEY_GRAVE_ACCENT) == GLFW_PRESS)
+    {
+        double currentTime = glfwGetTime();
+        if (currentTime - lastKeyPressTime > debounceThreshold)
+        {
+            isWindowHidden = !isWindowHidden;
+            if (cursorLocked)
+            {
+                //Unlock mouse
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                cursorLocked = false;
+
+            }
+            else
+            {
+                //Place mouse on middle of screen
+                glfwSetCursorPos(window, Camera::SCR_WIDTH / 2,Camera::SCR_HEIGHT/2);
+                //Lock mouse
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                cursorLocked = true;
+
+            }
+            lastKeyPressTime = currentTime; // Update debounce timer
+        }
+    }
+
+    // End program
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -241,6 +241,9 @@ int main() {
 
         // Update Camera uniform values
         cam.setUniforms(shaderProgram.m_ProgramId);
+        shaderProgram.setInt("SAMPLES", number_of_samples);
+        shaderProgram.setInt("MAX_DEPTH", ray_depth);
+
 
         // VAO is needed even though it does nothing
         glBindVertexArray(vao);
@@ -248,7 +251,7 @@ int main() {
         glBindVertexArray(0);
 
         // Display DearImGui
-        display_gui();
+        display_gui(deltaTime);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -256,7 +259,9 @@ int main() {
         // Compute frame time
         double frameEnd = glfwGetTime();
         deltaTime = frameEnd - frameStart;
-        cam.processInput(window, deltaTime);
+        if(!isWindowHidden)
+            cam.processCameraInput(window, deltaTime);
+        processInput(window, deltaTime);
     }
 
     // Cleanup

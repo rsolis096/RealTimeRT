@@ -28,6 +28,7 @@
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Camera.cpp" />
     <ClCompile Include="src\glad.c" />
+    <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\Hittable.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Material.cpp" />
@@ -39,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\GUI.h" />
     <ClInclude Include="src\Hittable.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\shader.h" />
