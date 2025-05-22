@@ -52,13 +52,13 @@ const float NEG_MAX = -3.402823466e+38;  // Max negative float
 const float pi = 3.14159265358979323846;
 vec3   defocus_disk_u;       // Disk X basis for defocus
 vec3   defocus_disk_v;       // Disk Y basis for defocus
-
+float iSeed;
 
 /* Uniforms */
 uniform Camera cam;
 uniform int   hittableCount;
 uniform Hittable hittables[MAX_HITTABLES];
-uniform float uSeed; // Time used for random vallue seeding
+uniform float uSeed; // Time used for random value seeding
 uniform int SCR_WIDTH;
 uniform int SCR_HEIGHT;
 uniform int SAMPLES;;
@@ -112,7 +112,7 @@ float random_range(vec2 st, float mn, float mx) {
 
 // Return random vec3 with values in range [0,1]
 vec3 random() {
-    vec2 seed = gl_FragCoord.xy + vec2(uSeed, -uSeed);
+    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
 
     return vec3(
         random_float(seed + vec2(1.0, 0.0)), 
@@ -123,7 +123,7 @@ vec3 random() {
 
 // Return random vec3 with values in range [0,1]
 vec3 random(float min, float max) {
-    vec2 seed = gl_FragCoord.xy + vec2(uSeed, -uSeed);
+    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
 
     return vec3(
         random_range(seed + vec2(1.0, 0.0), min,max), 
@@ -134,7 +134,7 @@ vec3 random(float min, float max) {
 
 // Return random unit-length vector
 vec3 random_unit_vector(){
-    vec2 seed = gl_FragCoord.xy + vec2(uSeed, -uSeed);
+    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
     float r1 = random_float(seed + vec2(1.0, 0.0));
     float r2 = random_float(seed + vec2(0.0, 0.0));
     float r3 = random_float(seed + vec2(0.0, 1.0));
@@ -157,8 +157,8 @@ vec3 random_in_unit_disk() {
     vec3 p;
     do {
         p = vec3(
-            random_range(gl_FragCoord.xy + vec2(uSeed, -uSeed), -1.0, 1.0),
-            random_range(gl_FragCoord.yx + vec2(-uSeed, uSeed), -1.0, 1.0),
+            random_range(gl_FragCoord.xy + vec2(iSeed, -iSeed), -1.0, 1.0),
+            random_range(gl_FragCoord.yx + vec2(-iSeed, iSeed), -1.0, 1.0),
             0.0
         );
     } while (dot(p,p) >= 1.0);
@@ -176,8 +176,8 @@ void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
 
 vec2 sample_square2D() {
     vec2 r = vec2(
-      random_float(gl_FragCoord.xy + vec2(uSeed, -uSeed)),  // or however you seed
-      random_float(gl_FragCoord.xy + vec2(-uSeed, uSeed))
+      random_float(gl_FragCoord.xy + vec2(iSeed, -iSeed)),  // or however you seed
+      random_float(gl_FragCoord.xy + vec2(-iSeed, iSeed))
     );
     return r - 0.5;
 }
@@ -404,12 +404,15 @@ void main() {
     // Initialize ray tracing properties
     vec3  pixel_color = vec3(0.0);
 
+    iSeed = uSeed;
+
     for (int i = 0; i < SAMPLES; ++i) {
 
+        iSeed += i;
 
         // 1) Create a seed for jitter vec generation
         float fi = float(i);
-        vec2 seed = gl_FragCoord.xy + vec2(uSeed + fi, uSeed - fi);
+        vec2 seed = gl_FragCoord.xy + vec2(iSeed + fi, iSeed - fi);
 
         // 2) Create jitter offset for anti-aliasing [-0.5, 0.5]
         vec2 jitter = vec2(

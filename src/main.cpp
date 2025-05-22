@@ -27,7 +27,6 @@ double lastKeyPressTime = 0.0;
 // Mouse location properties
 double lastX;
 double lastY;
-bool firstMouse = true;
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
