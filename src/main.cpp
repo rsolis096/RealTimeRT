@@ -7,6 +7,7 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <gl/GL.h>
 #include <vector>
 
 
@@ -16,7 +17,6 @@
 #include "Hittable.h"
 
 #include "GUI.h"
-
 
 Camera cam;
 double deltaTime = 0.0;
@@ -166,6 +166,9 @@ int main() {
 
     }
 
+    // Remove vsync
+    glfwSwapInterval(0);
+
     // Locks cursor to screen, apply callback function
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -173,9 +176,19 @@ int main() {
     // Used to update dynamically update window size
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+
+    // Initialize GLAD
+    // 
     // Load OpenGL functions using GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD\n";
+        return -1;
+    }
+
+
+    // Check if extension is available
+    if (!glfwExtensionSupported("GL_ARB_shading_language_include")) {
+        std::cerr << "Include extension not available!\n";
         return -1;
     }
 
@@ -222,6 +235,9 @@ int main() {
     // Initialize ImGui
     init_gui(window);
 
+    double delay_fps_display = 0.0f;
+    float display_fps = 1.f;
+
     // Draw Loop
     while (!glfwWindowShouldClose(window)) {
             
@@ -250,7 +266,7 @@ int main() {
         glBindVertexArray(0);
 
         // Display DearImGui
-        display_gui(deltaTime);
+        display_gui(display_fps);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -258,6 +274,15 @@ int main() {
         // Compute frame time
         double frameEnd = glfwGetTime();
         deltaTime = frameEnd - frameStart;
+
+        // Delay fps updates by 1 second
+        delay_fps_display += deltaTime;
+        if (delay_fps_display > 1) {
+            display_fps = deltaTime;
+            delay_fps_display = 0.1f;
+        }
+
+
         if(!isWindowHidden)
             cam.processCameraInput(window, deltaTime);
         processInput(window, deltaTime);

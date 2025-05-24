@@ -19,12 +19,12 @@
     <Filter Include="Source Files\ImGui">
       <UniqueIdentifier>{658bbbf2-9fa9-41d7-8955-0fab07ec5e8c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\shaders\includes">
+      <UniqueIdentifier>{9185355d-2ba3-4570-b504-7118eed3a7a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\shader.cpp">
@@ -63,6 +63,9 @@
     <ClCompile Include="src\GUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\frag.glsl">
@@ -70,6 +73,21 @@
     </None>
     <None Include="shaders\vert.glsl">
       <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\include\ray.glsl">
+      <Filter>Source Files\shaders\includes</Filter>
+    </None>
+    <None Include="shaders\include\utilities.glsl">
+      <Filter>Source Files\shaders\includes</Filter>
+    </None>
+    <None Include="shaders\include\interval.glsl">
+      <Filter>Source Files\shaders\includes</Filter>
+    </None>
+    <None Include="shaders\include\camera.glsl">
+      <Filter>Source Files\shaders\includes</Filter>
+    </None>
+    <None Include="shaders\include\aabb.glsl">
+      <Filter>Source Files\shaders\includes</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

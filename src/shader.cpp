@@ -1,7 +1,47 @@
 #include "Shader.h"
 
+// Load a file into a std::string
+std::string LoadFile(const char* path) {
+    std::ifstream in(path);
+    if (!in) {
+        std::cout << "Failed to find shader include " << path << std::endl;
+    }
+    std::stringstream ss;
+    ss << in.rdbuf();
+    return ss.str();
+}
+
+void loadIncludes() {
+
+    // List of virtual names opengfl will use for includes
+    std::vector<std::pair<const char*, const char*>> includes = {
+        { "/ray.glsl", "shaders/include/ray.glsl"    },
+        { "/utilities.glsl", "shaders/include/utilities.glsl"    },
+        { "/interval.glsl", "shaders/include/interval.glsl"    },
+        { "/camera.glsl", "shaders/include/camera.glsl"    },
+        { "/aabb.glsl", "shaders/include/aabb.glsl"    },
+
+    };
+
+    for (std::pair<const char*, const char*>& inc : includes) {
+        const char* name = inc.first;
+        std::string src = LoadFile(inc.second);
+        glNamedStringARB(
+            GL_SHADER_INCLUDE_ARB,
+            -1,
+            name,
+            -1,
+            src.c_str()
+        );
+    }
+}
+
 Shader::Shader(const char* vertPath, const char* fragPath, const char* geomPath)
 {
+
+    // Load shader includes
+    loadIncludes();
+
     m_ProgramId = glCreateProgram();
     compileShader(vertPath, "VERTEX", m_ProgramId);
     compileShader(fragPath, "FRAGMENT", m_ProgramId);

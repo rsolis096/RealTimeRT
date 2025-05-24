@@ -20,7 +20,7 @@ void display_gui(double deltaTime) {
 
         // Rendering
         ImGui::Begin("OpenGL Project");
-        ImGui::Text("%.3f fps", (1.f / static_cast<float>(deltaTime)));
+        ImGui::Text("%.3f fps", (1.0f / static_cast<float>(deltaTime)));
 
         ImGui::Text("# of Samples");
         ImGui::DragInt("##samples", &number_of_samples, 1.f, 1, 5);

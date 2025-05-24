@@ -1,14 +1,26 @@
 #version 430 core
+#extension GL_ARB_shading_language_include : require
 
 in  vec2 fragUV;
 out vec4 FragColor;
 
-/* Struct Definitions */
+/* Constants */
+const int MAX_HITTABLES = 100;
+const float POS_MAX = 3.402823466e+38;   // Max positive float
+const float NEG_MAX = -3.402823466e+38;  // Max negative float
+const float pi = 3.14159265358979323846;
+vec3   defocus_disk_u;       // Disk X basis for defocus
+vec3   defocus_disk_v;       // Disk Y basis for defocus
+float iSeed;
 
-struct Ray {
-    vec3 origin;      // Ray start point
-    vec3 direction;   // Ray direction vector
-};
+/* Includes (constants defined in main for now) */
+#include "/ray.glsl"
+#include "/utilities.glsl"
+#include "/interval.glsl"
+#include "/camera.glsl"
+#include "/aabb.glsl"
+
+/* Struct Definitions */
 
 struct Material {
     int type;              // 0=Lambertian,1=Metal,2=Dielectric
@@ -31,29 +43,6 @@ struct Hittable {
     Material mat;      // Material for this sphere
 };
 
-struct Interval {
-    float min; // Lower bound (t_min)
-    float max; // Upper bound (t_max)
-};
-
-struct Camera {
-    vec3 lookfrom;      // Eye position
-    vec3 lookat;        // Look-at point or direction
-    vec3 vup;           // World up vector
-    float vfov;         // Vertical field of view (deg)
-    float defocus_angle;// Aperture angle for blur
-    float focus_dist;   // Focus distance for depth-of-field
-};
-
-/* Constants*/
-const int MAX_HITTABLES = 100;
-const float POS_MAX = 3.402823466e+38;   // Max positive float
-const float NEG_MAX = -3.402823466e+38;  // Max negative float
-const float pi = 3.14159265358979323846;
-vec3   defocus_disk_u;       // Disk X basis for defocus
-vec3   defocus_disk_v;       // Disk Y basis for defocus
-float iSeed;
-
 /* Uniforms */
 uniform Camera cam;
 uniform int   hittableCount;
@@ -61,7 +50,7 @@ uniform Hittable hittables[MAX_HITTABLES];
 uniform float uSeed; // Time used for random value seeding
 uniform int SCR_WIDTH;
 uniform int SCR_HEIGHT;
-uniform int SAMPLES;;
+uniform int SAMPLES;
 uniform int MAX_DEPTH;
 
 /* Globals */
@@ -70,101 +59,8 @@ ivec2 resolution = ivec2(SCR_WIDTH, SCR_HEIGHT);
 
 /* Utilities & Implementations */
 
-// Convert degrees to radians
-float degrees_to_radians(float degrees) {
-    return degrees * pi / 180.0;
-}
 
-// Size of an interval
-float size(Interval i)  {
-    return i.max - i.min;
-}
-
-// Check if x is within [min, max]
-bool contains(Interval i, float x)  {
-    return i.min <= x && x <= i.max;
-}
-
-// Check if x is within (min, max)
-bool surrounds(Interval i, float x)  {
-    return i.min < x && x < i.max;
-}
-
-// Clamp x to the interval [min, max]
-float clamp(Interval i, float x) {
-    if (x < i.min) return i.min;
-    if (x > i.max) return i.max;
-    return x;
-}  
-
-// Return a pseudo-random float in range [0,1]
-float random_float(vec2 st)
-{
-    float temp = fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-    return temp;
-}
-
-// Return random float in [mn, mx]
-float random_range(vec2 st, float mn, float mx) {
-    float r01 = random_float(st);       // in [0,1)
-    return mn + r01 * (mx - mn);        // scale to [mn, mx)
-}
-
-// Return random vec3 with values in range [0,1]
-vec3 random() {
-    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
-
-    return vec3(
-        random_float(seed + vec2(1.0, 0.0)), 
-        random_float(seed + vec2(0.0, 0.0)), 
-        random_float(seed + vec2(0.0, 1.0))
-    );
-}
-
-// Return random vec3 with values in range [0,1]
-vec3 random(float min, float max) {
-    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
-
-    return vec3(
-        random_range(seed + vec2(1.0, 0.0), min,max), 
-        random_range(seed + vec2(0.0, 0.0), min,max), 
-        random_range(seed + vec2(0.0, 1.0), min,max)
-    );
-}
-
-// Return random unit-length vector
-vec3 random_unit_vector(){
-    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
-    float r1 = random_float(seed + vec2(1.0, 0.0));
-    float r2 = random_float(seed + vec2(0.0, 0.0));
-    float r3 = random_float(seed + vec2(0.0, 1.0));
-
-    return normalize(vec3(r1, r2, r3));
-}
-
-// Return random vector on hemisphere around normal
-vec3 random_on_hemisphere(inout vec3 normal) {
-
-    vec3 on_unit_sphere = random_unit_vector();
-    if (dot(on_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
-        return on_unit_sphere;
-    else
-        return -on_unit_sphere;
-}
-
-// Return random point inside unit disk (for defocus)
-vec3 random_in_unit_disk() {
-    vec3 p;
-    do {
-        p = vec3(
-            random_range(gl_FragCoord.xy + vec2(iSeed, -iSeed), -1.0, 1.0),
-            random_range(gl_FragCoord.yx + vec2(-iSeed, iSeed), -1.0, 1.0),
-            0.0
-        );
-    } while (dot(p,p) >= 1.0);
-    return p;
-}
-
+// Put in sphere.glsl
 void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
     // Sets the hit record normal vector.
     // NOTE: the parameter `outward_normal` is assumed to have unit length.
@@ -174,23 +70,12 @@ void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal) {
     rec.normal = rec.front_face ? outward_normal : -outward_normal;
 }
 
-vec2 sample_square2D() {
-    vec2 r = vec2(
-      random_float(gl_FragCoord.xy + vec2(iSeed, -iSeed)),  // or however you seed
-      random_float(gl_FragCoord.xy + vec2(-iSeed, iSeed))
-    );
-    return r - 0.5;
-}
 
-vec3 defocus_disk_sample(vec3 origin) {
-    // Returns a random point in the camera defocus disk.
-    vec3 p = random_in_unit_disk();
-    return origin + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
-}
 
-Ray make_ray(vec3 origin, vec3 direction, vec3 filmPoint) {
+// Put in camera.glsl
+Ray make_ray(in Camera camera, vec3 origin, vec3 direction, vec3 filmPoint) {
     Ray r;
-    r.origin    = (cam.defocus_angle <= 0) ? origin : defocus_disk_sample(origin);
+    r.origin    = (camera.defocus_angle <= 0) ? origin : defocus_disk_sample(origin);
     r.direction = normalize(filmPoint - r.origin);
     return r;
 }
@@ -199,32 +84,8 @@ vec3 ray_at(Ray r, float t) {
     return r.origin + t * r.direction;
 }
 
-float linear_to_gamma(float linear_component)
-{
-    if (linear_component > 0)
-        return sqrt(linear_component);
 
-    return 0;
-}
-
-vec3 reflect(vec3 v, vec3 n) {
-    return v - 2*dot(v,n)*n;
-}
-
-bool near_zero(vec3 v) {
-    const float s = 1e-8;
-    // abs(v) < vec3(s) yields a bvec3, and all(...) checks all components
-    return all( lessThan( abs(v), vec3(s) ) );
-}
-
-float reflectance(float cosine, float refraction_index) {
-        // Use Schlick's approximation for reflectance.
-        float r0 = (1 - refraction_index) / (1 + refraction_index);
-        r0 = r0*r0;
-        return r0 + (1-r0)* pow((1 - cosine),5);
-    }
-
-// Material Scattering
+// Material Scattering put in material.glsl
 bool scatter(
     in  Ray        r_in,        // incoming ray (read-only)
     in  hit_record rec,         // hit info (read-only)
@@ -288,6 +149,7 @@ bool scatter(
 
 }
 
+// put in sphere.glsl
 bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable obj) {
         vec3 oc = obj.sphereCenter - r.origin;
         float a = dot(r.direction, r.direction);
@@ -316,7 +178,6 @@ bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, Hittable o
 
         return true;
 }
-
 
 vec3 ray_color(Ray r) {
     vec3 throughput = vec3(1.0);   // cumulative attenuation
@@ -366,48 +227,17 @@ vec3 ray_color(Ray r) {
     return result;
 }
 
-vec3 update_camera(vec2 uv){
-
-    // Initialize the camera
-
-    vec3 camDir = normalize(cam.lookfrom - cam.lookat);
-    vec3 camRight = normalize(cross(cam.vup, camDir));
-    vec3 camUp = cross(camDir, camRight); // What is considered up relative to cam
-
-
-    float aspect      = float(resolution.x) / float(resolution.y);
-    float theta       = radians(cam.vfov);
-    float half_h      = tan(theta * 0.5); // half-height of the image plane
-    float half_w      = aspect * half_h; // Adjust width for to keep aspect ratio
-
-
-    vec3 horizontal  = 2.0 * half_w * camRight * cam.focus_dist;
-    vec3 vertical    = 2.0 * half_h * camUp  * cam.focus_dist;
-
-    vec3 lower_left = cam.lookfrom
-                     - camDir * cam.focus_dist
-                     - camRight * half_w  * cam.focus_dist
-                     - camUp    * half_h  * cam.focus_dist;                
-
-    float defocus_radius = cam.focus_dist * tan(degrees_to_radians(cam.defocus_angle / 2));
-    defocus_disk_u = camRight * defocus_radius;
-    defocus_disk_v = camUp * defocus_radius;
-
-    return lower_left 
-        + uv.x * horizontal   
-        + uv.y * vertical;
-
-}
-
 void main() {
 
     // Initialize ray tracing properties
     vec3  pixel_color = vec3(0.0);
 
+    // iSeed (iteration seed), unique for each sample, init from uniform uSeed
     iSeed = uSeed;
 
     for (int i = 0; i < SAMPLES; ++i) {
 
+        //Update iteration seed
         iSeed += i;
 
         // 1) Create a seed for jitter vec generation
@@ -427,9 +257,9 @@ void main() {
         vec2 uv = pixel_coords / vec2(resolution);
 
 
-        vec3 filmPoint = update_camera(uv);
+        vec3 filmPoint = update_camera(cam, uv, resolution);
         vec3 dir       = normalize(filmPoint - cam.lookfrom);
-        Ray  r         = make_ray(cam.lookfrom, dir, filmPoint);
+        Ray  r         = make_ray(cam, cam.lookfrom, dir, filmPoint);
 
         pixel_color += ray_color(r);
     }

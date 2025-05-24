@@ -36,6 +36,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\frag.glsl" />
+    <None Include="shaders\include\aabb.glsl" />
+    <None Include="shaders\include\camera.glsl" />
+    <None Include="shaders\include\interval.glsl" />
+    <None Include="shaders\include\ray.glsl" />
+    <None Include="shaders\include\utilities.glsl" />
     <None Include="shaders\vert.glsl" />
   </ItemGroup>
   <ItemGroup>
