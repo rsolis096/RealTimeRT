@@ -14,7 +14,10 @@
 #include "shader.h"
 #include "camera.h"
 #include "utilities.h"
+
 #include "Hittable.h"
+#include "Sphere.h"
+#include "Cube.h"
 
 #include "GUI.h"
 
@@ -27,6 +30,13 @@ double lastKeyPressTime = 0.0;
 // Mouse location properties
 double lastX;
 double lastY;
+
+//Scene Setup
+std::vector<GPUHittable>  gpuPrims;
+std::vector<GPUSphere>    gpuSpheres;
+std::vector<GPUCube>      gpuCubes;
+std::vector<GPUMaterial>  gpuMats;
+GLuint ssboPrims = 0, ssboSpheres = 0, ssboCubes = 0, ssboMats = 0;
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
@@ -86,49 +96,90 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void setup_scene(std::vector<Hittable>& hitObjects) {
+void setup_scene() {
 
+    /*
+    Fill these vectors
+
+    std::vector<GPUHittable>  gpuPrims;
+    std::vector<GPUSphere>    gpuSpheres;
+    std::vector<GPUCube>      gpuCubes;
+    std::vector<GPUMaterial>     gpuMats;
+    
+    */
+
+    // Ground
     Material ground_material = Material::MakeLambertian(glm::vec3(0.5, 0.5, 0.5));
-    hitObjects.push_back(Hittable(glm::vec3(0, -1000, 0), 1000, ground_material));
 
+    // albedo, fuzz, type, refraction, padding
+    gpuMats.push_back({ { ground_material.m_Albedo, ground_material.m_Fuzz }, {float(ground_material.m_Type), 0.f, 0.f, 0.f} });
+    // position, radius, color, mat index
+    gpuSpheres.push_back({ {0, -1000.f, 0.f, 1000.f}, {0.f, 0.f, 0.f, 0.f } });
+        
+    // Generate objects with random materials
     for (int a = -4; a < 4; a++) {
         for (int b = -4; b < 4; b++) {
+
+
             float choose_mat = random_float();
             glm::vec3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
 
             if ((center - glm::vec3(4, 0.2, 0)).length() > 0.9) {
 
                 if (choose_mat < 0.8) {
+
                     // diffuse
                     glm::vec3 albedo = random_vec() * random_vec();
                     Material sphere_material = Material::MakeLambertian(albedo);
-                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                    gpuMats.push_back({ { sphere_material.m_Albedo, sphere_material.m_Fuzz }, {float(sphere_material.m_Type), 0.f, 0.f, 0.f} });
+                    gpuSpheres.push_back({ {center, 0.2f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1)} });
+
                 }
                 else if (choose_mat < 0.95) {
+
                     // metal
                     glm::vec3 albedo = random_vec(0.5, 1);
                     float fuzz = random_float(0, 0.5);
                     Material sphere_material = Material::MakeMetal(albedo, fuzz);
-                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                    gpuMats.push_back({ { sphere_material.m_Albedo, sphere_material.m_Fuzz }, {float(sphere_material.m_Type), 0.f, 0.f, 0.f} });
+                    gpuSpheres.push_back({ {center, 0.2f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1)} });
+
                 }
                 else {
+
                     // glass
                     Material sphere_material = Material::MakeDielectric(1.5);
-                    hitObjects.push_back(Hittable(center, 0.2, sphere_material));
+                    gpuMats.push_back({ { sphere_material.m_Albedo, sphere_material.m_Fuzz }, {float(sphere_material.m_Type), 0.f, 0.f, 0.f} });
+                    gpuSpheres.push_back({ {center, 0.2f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1)} });
                 }
             }
         }
     }
 
+    
     Material material1 = Material::MakeDielectric(1.5);
-    hitObjects.push_back(Hittable(glm::vec3(0, 1, 0), 1.0, material1));
+    gpuMats.push_back({ { material1.m_Albedo, material1.m_Fuzz }, {float(material1.m_Type), 0.f, 0.f, 0.f} });
+    gpuSpheres.push_back({ {0, 1.f, 0.f, 1.f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1) } });
 
     Material material2 = Material::MakeLambertian(glm::vec3(0.4, 0.2, 0.1));
-    hitObjects.push_back(Hittable(glm::vec3(-4, 1, 0), 1.0, material2));
+    gpuMats.push_back({ { material2.m_Albedo, material2.m_Fuzz }, {float(material2.m_Type), 0.f, 0.f, 0.f} });
+    gpuSpheres.push_back({ {-4.f, 1.f, 0.f, 1.f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1) } });
 
     Material material3 = Material::MakeMetal(glm::vec3(0.7, 0.6, 0.5), 0.0);
-    hitObjects.push_back(Hittable(glm::vec3(4, 1, 0), 1.0, material3));
+    gpuMats.push_back({ { material3.m_Albedo, material3.m_Fuzz }, {float(material3.m_Type), 0.f, 0.f, 0.f} });
+    gpuSpheres.push_back({ {4.f, 1.f, 0.f, 1.f}, {0.f, 0.f, 0.f,  float(gpuMats.size() - 1)} });
+
+
 }
+
+void upload_ssbo(GLuint& id, GLuint binding, const void* data, GLsizeiptr bytes) {
+    glGenBuffers(1, &id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, bytes, data, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+};
+
 
 int main() {
 
@@ -152,15 +203,14 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-
+    
+    // Initialize cursor position to prevent snapping
     {
         int width, height;
         glfwGetWindowSize(window, &width, &height);
 
-        // (2) Warp to center:
         glfwSetCursorPos(window, width * 0.5, height * 0.5);
 
-        // (3) Now initialize your lastX/lastY from the same center:
         lastX = width * 0.5;
         lastY = height * 0.5;
 
@@ -185,7 +235,6 @@ int main() {
         return -1;
     }
 
-
     // Check if extension is available
     if (!glfwExtensionSupported("GL_ARB_shading_language_include")) {
         std::cerr << "Include extension not available!\n";
@@ -195,8 +244,20 @@ int main() {
     // Specify viewport of OpenGL
     glViewport(0, 0, Camera::SCR_WIDTH, Camera::SCR_HEIGHT);
 
+    GLuint imageTexture;
+    glGenTextures(1, &imageTexture);
+    glBindTexture(GL_TEXTURE_2D, imageTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, Camera::SCR_WIDTH, Camera::SCR_HEIGHT);
+
+
+
     // Create Shader program
-    Shader shaderProgram("shaders/vert.glsl", "shaders/frag.glsl", NULL);
+    Shader graphicsProgram("shaders/vert.glsl", "shaders/frag.glsl");
+    Shader computeProgram("shaders/comp.glsl");
 
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;
@@ -204,26 +265,20 @@ int main() {
     glBindVertexArray(vao);
 
     // Create the scene
-    std::vector<Hittable> hitObjects;
-    setup_scene(hitObjects);
+    setup_scene();
 
-    // Apply constant uniforms
-    shaderProgram.use();
+    // Send scene to computer shader (upload ssbo and  init key values
+    computeProgram.use();
+    upload_ssbo(ssboSpheres, /*binding=*/0, gpuSpheres.data(), gpuSpheres.size() * sizeof(GPUSphere));
+    upload_ssbo(ssboMats, /*binding=*/1, gpuMats.data(), gpuMats.size() * sizeof(GPUMaterial));
+    glUniform1i(glGetUniformLocation(computeProgram.m_ProgramId, "uSphereCount"), (int)gpuSpheres.size());
+    glUniform1i(glGetUniformLocation(computeProgram.m_ProgramId, "uMaterialsCount"), (int)gpuMats.size());
+    computeProgram.setInt("SCR_HEIGHT", Camera::SCR_HEIGHT);
+    computeProgram.setInt("SCR_WIDTH", Camera::SCR_WIDTH);
 
-    // Send scene to fragment shader
-    glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, "hittableCount"), (int)hitObjects.size());
-    for (int i = 0; i < hitObjects.size(); ++i) {
-        // objects[i].type
-        std::string base = "hittables[" + std::to_string(i) + "].";
-        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereCenter").c_str()), 1, glm::value_ptr(hitObjects[i].m_Position));
-        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "sphereRadius").c_str()), hitObjects[i].m_Radius);
-        glUniform1i(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.type").c_str()), hitObjects[i].m_Mat.m_Type);
-        glUniform3fv(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.albedo").c_str()), 1, glm::value_ptr(hitObjects[i].m_Mat.m_Albedo));
-        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.refraction_index").c_str()), hitObjects[i].m_Mat.m_RefractionIndex);
-        glUniform1f(glGetUniformLocation(shaderProgram.m_ProgramId, (base + "mat.fuzz").c_str()), hitObjects[i].m_Mat.m_Fuzz);
-    }
-    shaderProgram.setInt("SCR_HEIGHT", Camera::SCR_HEIGHT);
-    shaderProgram.setInt("SCR_WIDTH", Camera::SCR_WIDTH);
+    // Set uniforms for the graphics (fragment) program
+    graphicsProgram.use();
+    graphicsProgram.setInt("uOutputTexture", 0);
 
     // Print version info
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
@@ -231,7 +286,6 @@ int main() {
     std::cout << "Vendor:         " << glGetString(GL_VENDOR) << std::endl;
     std::cout << "Renderer:       " << glGetString(GL_RENDERER) << std::endl;
      
-
     // Initialize ImGui
     init_gui(window);
 
@@ -240,27 +294,33 @@ int main() {
 
     // Draw Loop
     while (!glfwWindowShouldClose(window)) {
-            
 
         // Frame rate
         double frameStart = glfwGetTime();
 
-        // Background Color
+        // Update Compute Shader
+        computeProgram.use();
+        computeProgram.setFloat("uSeed", random_float());
+        computeProgram.setInt("SAMPLES", number_of_samples);
+        computeProgram.setInt("MAX_DEPTH", ray_depth);
+        cam.setUniforms(computeProgram.m_ProgramId);
+
+        // Dispatch the compute workgroups (this groups sizing performs better)
+        glDispatchCompute(
+            (GLuint)ceil(Camera::SCR_WIDTH / 16.0),
+            (GLuint)ceil(Camera::SCR_HEIGHT / 16.0),
+            1
+        );
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+
+        // Clear the background
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shaderProgram.use();
-
-        // Generate a random seed for the shader
-        shaderProgram.setFloat("uSeed", random_float());
-
-        // Update Camera uniform values
-        cam.setUniforms(shaderProgram.m_ProgramId);
-        shaderProgram.setInt("SAMPLES", number_of_samples);
-        shaderProgram.setInt("MAX_DEPTH", ray_depth);
-
-
-        // VAO is needed even though it does nothing
+        // Draw texture using vertex and fragment shader
+        graphicsProgram.use();
+        glBindImageTexture(0, imageTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0);
@@ -289,7 +349,8 @@ int main() {
     }
 
     // Cleanup
-    glDeleteProgram(shaderProgram.m_ProgramId);
+    glDeleteProgram(graphicsProgram.m_ProgramId);
+    glDeleteProgram(computeProgram.m_ProgramId);
     glBindVertexArray(0);
     glDeleteVertexArrays(1, &vao);
 

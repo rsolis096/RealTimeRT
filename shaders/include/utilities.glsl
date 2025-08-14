@@ -18,7 +18,7 @@ float random_range(vec2 st, float mn, float mx) {
 
 // Return random vec3 with values in range [0,1]
 vec3 random() {
-    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
+    vec2 seed = pixel_coords.xy + vec2(iSeed, -iSeed);
 
     return vec3(
         random_float(seed + vec2(1.0, 0.0)), 
@@ -29,7 +29,7 @@ vec3 random() {
 
 // Return random vec3 with values in range [0,1]
 vec3 random(float min, float max) {
-    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
+    vec2 seed = pixel_coords.xy + vec2(iSeed, -iSeed);
 
     return vec3(
         random_range(seed + vec2(1.0, 0.0), min,max), 
@@ -40,7 +40,7 @@ vec3 random(float min, float max) {
 
 // Return random unit-length vector
 vec3 random_unit_vector(){
-    vec2 seed = gl_FragCoord.xy + vec2(iSeed, -iSeed);
+    vec2 seed = pixel_coords.xy + vec2(iSeed, -iSeed);
     float r1 = random_float(seed + vec2(1.0, 0.0));
     float r2 = random_float(seed + vec2(0.0, 0.0));
     float r3 = random_float(seed + vec2(0.0, 1.0));
@@ -63,8 +63,8 @@ vec3 random_in_unit_disk() {
     vec3 p;
     do {
         p = vec3(
-            random_range(gl_FragCoord.xy + vec2(iSeed, -iSeed), -1.0, 1.0),
-            random_range(gl_FragCoord.yx + vec2(-iSeed, iSeed), -1.0, 1.0),
+            random_range(pixel_coords.xy + vec2(iSeed, -iSeed), -1.0, 1.0),
+            random_range(pixel_coords.yx + vec2(-iSeed, iSeed), -1.0, 1.0),
             0.0
         );
     } while (dot(p,p) >= 1.0);
@@ -74,8 +74,8 @@ vec3 random_in_unit_disk() {
 
 vec2 sample_square2D() {
     vec2 r = vec2(
-      random_float(gl_FragCoord.xy + vec2(iSeed, -iSeed)),  // or however you seed
-      random_float(gl_FragCoord.xy + vec2(-iSeed, iSeed))
+      random_float(pixel_coords.xy + vec2(iSeed, -iSeed)),  // or however you seed
+      random_float(pixel_coords.xy + vec2(-iSeed, iSeed))
     );
     return r - 0.5;
 }

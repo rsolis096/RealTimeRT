@@ -27,14 +27,16 @@
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\Camera.cpp" />
+    <ClCompile Include="src\Cube.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\GUI.cpp" />
-    <ClCompile Include="src\Hittable.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Material.cpp" />
     <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\Sphere.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\comp.glsl" />
     <None Include="shaders\frag.glsl" />
     <None Include="shaders\include\aabb.glsl" />
     <None Include="shaders\include\camera.glsl" />
@@ -45,10 +47,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\Cube.h" />
     <ClInclude Include="src\GUI.h" />
     <ClInclude Include="src\Hittable.h" />
     <ClInclude Include="src\Material.h" />
     <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\Sphere.h" />
     <ClInclude Include="src\utilities.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

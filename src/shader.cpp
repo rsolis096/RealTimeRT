@@ -36,7 +36,7 @@ void loadIncludes() {
     }
 }
 
-Shader::Shader(const char* vertPath, const char* fragPath, const char* geomPath)
+Shader::Shader(const char* vertPath, const char* fragPath)
 {
 
     // Load shader includes
@@ -45,12 +45,27 @@ Shader::Shader(const char* vertPath, const char* fragPath, const char* geomPath)
     m_ProgramId = glCreateProgram();
     compileShader(vertPath, "VERTEX", m_ProgramId);
     compileShader(fragPath, "FRAGMENT", m_ProgramId);
-    if (geomPath) compileShader(geomPath, "GEOMETRY", m_ProgramId);
 
     // Now that all shaders are attached, link the program:
     glLinkProgram(m_ProgramId);
     checkCompileErrors(m_ProgramId, "PROGRAM", "PROGRAM");
 }
+
+
+Shader::Shader(const char* compPath)
+{
+
+    // Load shader includes
+    loadIncludes();
+
+    m_ProgramId = glCreateProgram();
+    compileShader(compPath, "COMPUTE", m_ProgramId);
+
+    // Now that all shaders are attached, link the program:
+    glLinkProgram(m_ProgramId);
+    checkCompileErrors(m_ProgramId, "COMPUTE_PROGRAM", "COMPUTE_PROGRAM");
+}
+
 
 void Shader::compileShader(const char* shader_path,
     const char* type,
@@ -71,7 +86,7 @@ void Shader::compileShader(const char* shader_path,
     GLuint shader = 0;
     if (strcmp(type, "VERTEX") == 0) shader = glCreateShader(GL_VERTEX_SHADER);
     else if (strcmp(type, "FRAGMENT") == 0) shader = glCreateShader(GL_FRAGMENT_SHADER);
-    else if (strcmp(type, "GEOMETRY") == 0) shader = glCreateShader(GL_GEOMETRY_SHADER);
+    else if (strcmp(type, "COMPUTE") == 0) shader = glCreateShader(GL_COMPUTE_SHADER);
     else {
         std::cerr << "ERROR: Invalid shader type: " << type << "\n";
         return;

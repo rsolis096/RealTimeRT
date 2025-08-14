@@ -30,3 +30,10 @@ struct Material {
 	static Material MakeDielectric(const float rf);
 
 };
+
+
+// std430 32 bytes
+struct GPUMaterial {
+	glm::vec4 albedo_fuzz;   // rgb = albedo, w = fuzz
+	glm::vec4 type_ref_pad;  // x = type (as float), y = ior, z,w = padding
+};

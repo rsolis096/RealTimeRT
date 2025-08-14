@@ -22,6 +22,12 @@
     <Filter Include="Source Files\shaders\includes">
       <UniqueIdentifier>{9185355d-2ba3-4570-b504-7118eed3a7a1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Hittable">
+      <UniqueIdentifier>{e0ef57a5-635f-4084-9b1f-24ce08482fad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Hittable">
+      <UniqueIdentifier>{e9f914f1-5f03-42f3-a865-ede2a9686bee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -31,9 +37,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Hittable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Material.cpp">
@@ -66,6 +69,12 @@
     <ClCompile Include="src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Cube.cpp">
+      <Filter>Source Files\Hittable</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Sphere.cpp">
+      <Filter>Source Files\Hittable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\frag.glsl">
@@ -89,6 +98,9 @@
     <None Include="shaders\include\aabb.glsl">
       <Filter>Source Files\shaders\includes</Filter>
     </None>
+    <None Include="shaders\comp.glsl">
+      <Filter>Source Files\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\shader.h">
@@ -100,14 +112,20 @@
     <ClInclude Include="src\utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Hittable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\GUI.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Hittable.h">
+      <Filter>Header Files\Hittable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Cube.h">
+      <Filter>Header Files\Hittable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Sphere.h">
+      <Filter>Header Files\Hittable</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
