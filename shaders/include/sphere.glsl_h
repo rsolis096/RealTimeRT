@@ -1,0 +1,12 @@
+#ifndef SPHERE_GLSL_H
+#define SPHERE_GLSL_H
+
+#include "/types.glsl_h"
+
+Sphere unpack_sphere(int index);
+
+void set_face_normal(in Ray r, inout hit_record rec, in vec3 outward_normal);
+
+bool intersectSphere(Ray r, inout Interval ray_t, out hit_record rec, int index);
+
+#endif

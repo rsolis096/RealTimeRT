@@ -1,0 +1,16 @@
+
+
+#include "/types.glsl_h"
+
+// Size of an interval
+float size(Interval i);
+
+// Check if x is within [min, max]
+bool contains(Interval i, float x);
+
+// Check if x is within (min, max)
+bool surrounds(Interval i, float x);
+
+// Clamp x to the interval [min, max]
+float clamp(Interval i, float x);
+

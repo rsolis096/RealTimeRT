@@ -1,15 +1,5 @@
-#ifndef CAMERA_GLSL
-#define CAMERA_GLSL
 
-struct Camera {
-    vec3 lookfrom;      // Eye position
-    vec3 lookat;        // Look-at point or direction
-    vec3 vup;           // World up vector
-    float vfov;         // Vertical field of view (deg)
-    float defocus_angle;// Aperture angle for blur
-    float focus_dist;   // Focus distance for depth-of-field
-};
-
+#include "/camera.glsl_h"
 
 vec3 update_camera(in Camera cam, vec2 uv, vec2 res){
 
@@ -44,4 +34,3 @@ vec3 update_camera(in Camera cam, vec2 uv, vec2 res){
 
 }
 
-#endif // Must end in newline

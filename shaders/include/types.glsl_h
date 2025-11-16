@@ -1,0 +1,46 @@
+#ifndef TYPES_GLSL_H
+#define TYPES_GLSL_H
+
+#include "/buffers.glsl_h"
+
+struct Camera {
+    vec3 lookfrom;      // Eye position
+    vec3 lookat;        // Look-at point or direction
+    vec3 vup;           // World up vector
+    float vfov;         // Vertical field of view (deg)
+    float defocus_angle;// Aperture angle for blur
+    float focus_dist;   // Focus distance for depth-of-field
+};
+
+struct Interval {
+    float min; // Lower bound (t_min)
+    float max; // Upper bound (t_max)
+};
+
+struct Ray {
+    vec3 origin;      // Ray start point
+    vec3 direction;   // Ray direction vector
+};
+
+struct Material {
+    int type;              // 0=Lambertian,1=Metal,2=Dielectric
+    vec3 albedo;           // Base color or reflectance
+    float refraction_index;// Index of refraction for dielectrics
+    float fuzz;            // Fuzziness for metal reflections
+};
+
+struct hit_record {
+    vec3 point;       // Intersection point
+    vec3 normal;      // Surface normal at hit
+    float t;          // Ray parameter at hit
+    bool front_face;  // Did we hit front-facing side?
+    Material mat;     // Material properties at hit
+};
+
+struct Sphere {
+    vec3 sphereCenter;  // Sphere center position
+    float sphereRadius; // Sphere radius
+    Material mat;       // Material for this sphere
+};
+
+#endif // Must end with a newline

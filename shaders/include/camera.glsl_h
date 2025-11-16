@@ -1,0 +1,8 @@
+#ifndef CAMERA_GLSL_H
+#define CAMERA_GLSL_H
+
+#include "/types.glsl_h"
+
+vec3 update_camera(in Camera cam, vec2 uv, vec2 res);
+
+#endif // Must end in newline

@@ -1,0 +1,12 @@
+#ifndef RAY_GLSL_H
+#define RAY_GLSL_H
+
+#include "/types.glsl_h"
+
+Ray make_ray(in Camera camera, vec3 origin, vec3 direction, vec3 filmPoint);
+
+vec3 ray_at(Ray r, float t);
+
+vec3 ray_color(Ray r);
+
+#endif

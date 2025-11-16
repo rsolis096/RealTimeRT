@@ -1,11 +1,4 @@
-
-#ifndef INTERVAL_GLSL
-#define INTERVAL_GLSL
-
-struct Interval {
-    float min; // Lower bound (t_min)
-    float max; // Upper bound (t_max)
-};
+#include "/interval.glsl_h"
 
 // Size of an interval
 float size(Interval i)  {
@@ -29,4 +22,3 @@ float clamp(Interval i, float x) {
     return x;
 }
 
-#endif // Must end with a newline

@@ -1,0 +1,40 @@
+#ifndef UTILITIES_GLSL_H
+#define UTILITIES_GLSL_H
+
+// Convert degrees to radians
+float degrees_to_radians(float degrees);
+
+// Return a pseudo-random float in range [0,1]
+float random_float(vec2 st);
+
+// Return random float in [mn, mx]
+float random_range(vec2 st, float mn, float mx);
+
+// Return random vec3 with values in range [0,1]
+vec3 random();
+
+// Return random vec3 with values in range [0,1]
+vec3 random(float min, float max);
+
+// Return random unit-length vector
+vec3 random_unit_vector();
+
+// Return random vector on hemisphere around normal
+vec3 random_on_hemisphere(inout vec3 normal);
+
+// Return random point inside unit disk (for defocus)
+vec3 random_in_unit_disk();
+
+vec2 sample_square2D();
+
+vec3 defocus_disk_sample(vec3 origin);
+
+float linear_to_gamma(float linear_component);
+
+vec3 reflect(vec3 v, vec3 n);
+
+bool near_zero(vec3 v);
+
+float reflectance(float cosine, float refraction_index);
+
+#endif // Must end with a newline

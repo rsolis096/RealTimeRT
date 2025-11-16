@@ -1,3 +1,7 @@
+
+
+#include "/utilities.glsl_h"
+
 // Convert degrees to radians
 float degrees_to_radians(float degrees) {
     return degrees * pi / 180.0;
@@ -110,3 +114,5 @@ float reflectance(float cosine, float refraction_index) {
         r0 = r0*r0;
         return r0 + (1-r0)* pow((1 - cosine),5);
 }
+
+

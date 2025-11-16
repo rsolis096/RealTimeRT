@@ -256,8 +256,8 @@ int main() {
 
 
     // Create Shader program
-    Shader graphicsProgram("shaders/vert.glsl", "shaders/frag.glsl");
-    Shader computeProgram("shaders/comp.glsl");
+    Shader graphicsProgram("shaders/source/vert.glsl", "shaders/source/frag.glsl");
+    Shader computeProgram("shaders/source/comp.glsl");
 
     // Quad rendered in vertex shader but some vao must be bound to render anything
     GLuint vao;

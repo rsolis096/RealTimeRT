@@ -1,0 +1,23 @@
+#ifndef BUFFERS_GLSL_H
+#define BUFFERS_GLSL_H
+
+struct PackedSphere {
+    vec4 center_radius;  // xyz, w radius
+    vec4 color_matId;    // rgb, w matId
+};
+
+struct PackedMaterial {
+	vec4 albedo_fuzz;   // rgb = albedo, w = fuzz
+	vec4 type_ref_pad;  // x = type (as float), y = ior, z,w = padding
+};
+
+
+layout(std430, binding = 0) buffer SpheresBuf {
+    PackedSphere inSpheres[];
+};
+
+layout(std430, binding = 1) buffer MaterialsBuf {
+    PackedMaterial inMaterials[];
+};
+
+#endif

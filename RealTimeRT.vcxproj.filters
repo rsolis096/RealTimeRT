@@ -19,14 +19,20 @@
     <Filter Include="Source Files\ImGui">
       <UniqueIdentifier>{658bbbf2-9fa9-41d7-8955-0fab07ec5e8c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\shaders\includes">
-      <UniqueIdentifier>{9185355d-2ba3-4570-b504-7118eed3a7a1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Hittable">
       <UniqueIdentifier>{e0ef57a5-635f-4084-9b1f-24ce08482fad}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Hittable">
       <UniqueIdentifier>{e9f914f1-5f03-42f3-a865-ede2a9686bee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\source">
+      <UniqueIdentifier>{85ab4b08-a120-4f90-b250-9d2e08b703ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\include">
+      <UniqueIdentifier>{9185355d-2ba3-4570-b504-7118eed3a7a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\source\implementations">
+      <UniqueIdentifier>{320ef565-6b58-4e23-a3c6-0c92962d05fc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -77,29 +83,62 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\frag.glsl">
-      <Filter>Source Files\shaders</Filter>
+    <None Include="shaders\source\comp.glsl">
+      <Filter>Source Files\shaders\source</Filter>
     </None>
-    <None Include="shaders\vert.glsl">
-      <Filter>Source Files\shaders</Filter>
+    <None Include="shaders\source\frag.glsl">
+      <Filter>Source Files\shaders\source</Filter>
     </None>
-    <None Include="shaders\include\ray.glsl">
-      <Filter>Source Files\shaders\includes</Filter>
+    <None Include="shaders\source\vert.glsl">
+      <Filter>Source Files\shaders\source</Filter>
     </None>
-    <None Include="shaders\include\utilities.glsl">
-      <Filter>Source Files\shaders\includes</Filter>
+    <None Include="shaders\include\aabb.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
     </None>
-    <None Include="shaders\include\interval.glsl">
-      <Filter>Source Files\shaders\includes</Filter>
+    <None Include="shaders\include\camera.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
     </None>
-    <None Include="shaders\include\camera.glsl">
-      <Filter>Source Files\shaders\includes</Filter>
+    <None Include="shaders\include\interval.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
     </None>
-    <None Include="shaders\include\aabb.glsl">
-      <Filter>Source Files\shaders\includes</Filter>
+    <None Include="shaders\include\ray.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
     </None>
-    <None Include="shaders\comp.glsl">
-      <Filter>Source Files\shaders</Filter>
+    <None Include="shaders\include\utilities.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
+    </None>
+    <None Include="shaders\source\Implementations\aabb.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\source\Implementations\camera.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\source\Implementations\interval.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\source\Implementations\ray.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\source\Implementations\utilities.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\include\types.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
+    </None>
+    <None Include="shaders\source\implementations\material.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\source\implementations\sphere.glsl">
+      <Filter>Source Files\shaders\source\implementations</Filter>
+    </None>
+    <None Include="shaders\include\sphere.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\material.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
+    </None>
+    <None Include="shaders\include\buffers.glsl_h">
+      <Filter>Source Files\shaders\include</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -15,11 +15,23 @@ void loadIncludes() {
 
     // List of virtual names opengfl will use for includes
     std::vector<std::pair<const char*, const char*>> includes = {
-        { "/ray.glsl", "shaders/include/ray.glsl"    },
-        { "/utilities.glsl", "shaders/include/utilities.glsl"    },
-        { "/interval.glsl", "shaders/include/interval.glsl"    },
-        { "/camera.glsl", "shaders/include/camera.glsl"    },
-        { "/aabb.glsl", "shaders/include/aabb.glsl"    },
+        { "/material.glsl", "shaders/source/implementations/material.glsl"    },
+        { "/sphere.glsl", "shaders/source/implementations/sphere.glsl"    },
+        { "/ray.glsl", "shaders/source/implementations/ray.glsl"    },
+        { "/utilities.glsl", "shaders/source/implementations/utilities.glsl"    },
+        { "/interval.glsl", "shaders/source/implementations/interval.glsl"    },
+        { "/camera.glsl", "shaders/source/implementations/camera.glsl"    },
+        { "/aabb.glsl", "shaders/source/implementations/aabb.glsl"    },
+            
+        { "/types.glsl_h", "shaders/include/types.glsl_h"    },
+        { "/ray.glsl_h", "shaders/include/ray.glsl_h"    },
+        { "/utilities.glsl_h", "shaders/include/utilities.glsl_h"    },
+        { "/interval.glsl_h", "shaders/include/interval.glsl_h"    },
+        { "/camera.glsl_h", "shaders/include/camera.glsl_h"    },
+        { "/aabb.glsl_h", "shaders/include/aabb.glsl_h"    },
+		{ "/sphere.glsl_h", "shaders/include/sphere.glsl_h"    },
+        { "/material.glsl_h", "shaders/include/material.glsl_h"    },
+        { "/buffers.glsl_h", "shaders/include/buffers.glsl_h"    },
 
     };
 
@@ -28,9 +40,9 @@ void loadIncludes() {
         std::string src = LoadFile(inc.second);
         glNamedStringARB(
             GL_SHADER_INCLUDE_ARB,
-            -1,
+            strlen(name),
             name,
-            -1,
+            src.length(),
             src.c_str()
         );
     }
