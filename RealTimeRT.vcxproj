@@ -32,6 +32,7 @@
     <ClCompile Include="src\GUI.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Material.cpp" />
+    <ClCompile Include="src\Object.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\Sphere.cpp" />
   </ItemGroup>
@@ -60,8 +61,8 @@
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\Cube.h" />
     <ClInclude Include="src\GUI.h" />
-    <ClInclude Include="src\Hittable.h" />
     <ClInclude Include="src\Material.h" />
+    <ClInclude Include="src\Object.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\Sphere.h" />
     <ClInclude Include="src\utilities.h" />

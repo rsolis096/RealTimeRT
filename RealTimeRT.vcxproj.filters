@@ -81,6 +81,9 @@
     <ClCompile Include="src\Sphere.cpp">
       <Filter>Source Files\Hittable</Filter>
     </ClCompile>
+    <ClCompile Include="src\Object.cpp">
+      <Filter>Source Files\Hittable</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\source\comp.glsl">
@@ -157,13 +160,13 @@
     <ClInclude Include="src\GUI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Hittable.h">
-      <Filter>Header Files\Hittable</Filter>
-    </ClInclude>
     <ClInclude Include="src\Cube.h">
       <Filter>Header Files\Hittable</Filter>
     </ClInclude>
     <ClInclude Include="src\Sphere.h">
+      <Filter>Header Files\Hittable</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Object.h">
       <Filter>Header Files\Hittable</Filter>
     </ClInclude>
   </ItemGroup>

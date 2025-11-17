@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Hittable.h"
+#include "Object.h"
 
-struct Cube : public Hittable {
+struct Cube : public Object {
     glm::vec3 minCorner;
     glm::vec3 maxCorner;
     glm::vec3 color;

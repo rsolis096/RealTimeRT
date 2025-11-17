@@ -22,20 +22,18 @@ vec3 ray_color(Ray r) {
         // 1) cast ray r into the scene
         hit_record closest_rec;
         bool hit_something = false;
+
         float closest_hit = POS_MAX;
-        Interval ray_t = Interval(0.001, POS_MAX);
+        Interval ray_t = Interval(0.001, closest_hit);
 
         for (int i = 0; i < uSphereCount; ++i) {
             hit_record temp_rec;
-
-            // Find closest hit, save it to closest_rec
-            Interval testT = Interval(0.001, closest_hit);
-             
- 
-            if (intersectSphere(r, testT, temp_rec, i)) {
+         
+            if (intersectSphere(r, ray_t, temp_rec, i)) {
                 hit_something = true;
-                closest_hit     = temp_rec.t;   // tighten *our* closestT
-                closest_rec      = temp_rec;     // save the record
+                closest_hit = temp_rec.t;  
+                ray_t.max = closest_hit;
+                closest_rec = temp_rec; 
             }
 
         }
@@ -46,18 +44,21 @@ vec3 ray_color(Ray r) {
             float t = 0.5 * (unit_dir.y + 1.0);
             vec3 sky = (1.0-t)*vec3(1.0) + t*vec3(0.5, 0.7, 1.0);
             result += throughput * sky;
-            return result;
+            break;
         }
 
         // 3) we hit something: scatter
         vec3 attenuation;
         Ray scattered;
-        if (scatter(r, closest_rec, attenuation, scattered)) {
-            // accumulate the attenuation
-            throughput *= attenuation;
-            // continue tracing the scattered ray
-            r = scattered;
+        if (!scatter(r, closest_rec, attenuation, scattered)) {
+            break;
         }
+
+        // accumulate the attenuation
+        throughput *= attenuation;
+        // continue tracing the scattered ray
+        r = scattered;
+        
 
     }
 

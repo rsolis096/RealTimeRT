@@ -15,7 +15,6 @@
 #include "camera.h"
 #include "utilities.h"
 
-#include "Hittable.h"
 #include "Sphere.h"
 #include "Cube.h"
 
@@ -32,11 +31,9 @@ double lastX;
 double lastY;
 
 //Scene Setup
-std::vector<GPUHittable>  gpuPrims;
 std::vector<GPUSphere>    gpuSpheres;
-std::vector<GPUCube>      gpuCubes;
 std::vector<GPUMaterial>  gpuMats;
-GLuint ssboPrims = 0, ssboSpheres = 0, ssboCubes = 0, ssboMats = 0;
+GLuint ssboSpheres = 0, ssboMats = 0;
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
@@ -98,24 +95,16 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void setup_scene() {
 
-    /*
-    Fill these vectors
-
-    std::vector<GPUHittable>  gpuPrims;
-    std::vector<GPUSphere>    gpuSpheres;
-    std::vector<GPUCube>      gpuCubes;
-    std::vector<GPUMaterial>     gpuMats;
-    
-    */
-
     // Ground
     Material ground_material = Material::MakeLambertian(glm::vec3(0.5, 0.5, 0.5));
 
     // albedo, fuzz, type, refraction, padding
     gpuMats.push_back({ { ground_material.m_Albedo, ground_material.m_Fuzz }, {float(ground_material.m_Type), 0.f, 0.f, 0.f} });
+    
     // position, radius, color, mat index
-    gpuSpheres.push_back({ {0, -1000.f, 0.f, 1000.f}, {0.f, 0.f, 0.f, 0.f } });
-        
+    Sphere GroundSphere(glm::vec3(0, -1000.f, 0.f), glm::vec3(0.f), 1000.f, 0.f);
+    gpuSpheres.push_back(GroundSphere.GetGPUSphere());
+   
     // Generate objects with random materials
     for (int a = -4; a < 4; a++) {
         for (int b = -4; b < 4; b++) {
@@ -130,44 +119,59 @@ void setup_scene() {
 
                     // diffuse
                     glm::vec3 albedo = random_vec() * random_vec();
-                    Material sphere_material = Material::MakeLambertian(albedo);
-                    gpuMats.push_back({ { sphere_material.m_Albedo, sphere_material.m_Fuzz }, {float(sphere_material.m_Type), 0.f, 0.f, 0.f} });
-                    gpuSpheres.push_back({ {center, 0.2f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1)} });
+                    Sphere TempSphere(center, albedo, .2f, float(gpuMats.size() - 1));
+                    TempSphere.m_Material = Material::MakeLambertian(albedo);
+                    gpuMats.push_back(TempSphere.GetGPUMaterial());
+                    TempSphere.m_MatId = float(gpuMats.size() - 1);
+                    gpuSpheres.push_back(TempSphere.GetGPUSphere());
 
                 }
                 else if (choose_mat < 0.95) {
 
                     // metal
                     glm::vec3 albedo = random_vec(0.5, 1);
+                    Sphere TempSphere(center, albedo, .2f, float(gpuMats.size() - 1));
                     float fuzz = random_float(0, 0.5);
-                    Material sphere_material = Material::MakeMetal(albedo, fuzz);
-                    gpuMats.push_back({ { sphere_material.m_Albedo, sphere_material.m_Fuzz }, {float(sphere_material.m_Type), 0.f, 0.f, 0.f} });
-                    gpuSpheres.push_back({ {center, 0.2f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1)} });
+                    TempSphere.m_Material = Material::MakeMetal(albedo, fuzz);
+                    gpuMats.push_back(TempSphere.GetGPUMaterial());
+                    TempSphere.m_MatId = float(gpuMats.size() - 1);
+                    gpuSpheres.push_back(TempSphere.GetGPUSphere());
 
                 }
                 else {
 
                     // glass
-                    Material sphere_material = Material::MakeDielectric(1.5);
-                    gpuMats.push_back({ { sphere_material.m_Albedo, sphere_material.m_Fuzz }, {float(sphere_material.m_Type), 0.f, 0.f, 0.f} });
-                    gpuSpheres.push_back({ {center, 0.2f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1)} });
+                    Sphere TempSphere(center, glm::vec3(0.f), .2f, float(gpuMats.size() - 1));
+                    TempSphere.m_Material = Material::MakeDielectric(0.f);
+                    gpuMats.push_back(TempSphere.GetGPUMaterial());
+                    TempSphere.m_MatId = float(gpuMats.size() - 1);
+                    gpuSpheres.push_back(TempSphere.GetGPUSphere());
                 }
             }
         }
     }
 
     
-    Material material1 = Material::MakeDielectric(1.5);
-    gpuMats.push_back({ { material1.m_Albedo, material1.m_Fuzz }, {float(material1.m_Type), 0.f, 0.f, 0.f} });
-    gpuSpheres.push_back({ {0, 1.f, 0.f, 1.f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1) } });
+    // Large Glass Sphere
+    Sphere GlassSphere(glm::vec3(0, 1.f, 0.f), glm::vec3(0.f), 1.f, float(gpuMats.size() - 1));
+    GlassSphere.m_Material = Material::MakeDielectric(0.f);
+    gpuMats.push_back(GlassSphere.GetGPUMaterial());
+    GlassSphere.m_MatId = float(gpuMats.size() - 1);
+    gpuSpheres.push_back(GlassSphere.GetGPUSphere());
 
-    Material material2 = Material::MakeLambertian(glm::vec3(0.4, 0.2, 0.1));
-    gpuMats.push_back({ { material2.m_Albedo, material2.m_Fuzz }, {float(material2.m_Type), 0.f, 0.f, 0.f} });
-    gpuSpheres.push_back({ {-4.f, 1.f, 0.f, 1.f}, {0.f, 0.f, 0.f, float(gpuMats.size() - 1) } });
+    // Large Matte Sphere
+    Sphere MatteSphere(glm::vec3(-4.f, 1.f, 0.f), glm::vec3(0.f), 1.f, float(gpuMats.size() - 1));
+    MatteSphere.m_Material = Material::MakeLambertian(glm::vec3(0.4, 0.2, 0.1));
+    gpuMats.push_back(MatteSphere.GetGPUMaterial());
+    MatteSphere.m_MatId = float(gpuMats.size() - 1);
+    gpuSpheres.push_back(MatteSphere.GetGPUSphere());
 
-    Material material3 = Material::MakeMetal(glm::vec3(0.7, 0.6, 0.5), 0.0);
-    gpuMats.push_back({ { material3.m_Albedo, material3.m_Fuzz }, {float(material3.m_Type), 0.f, 0.f, 0.f} });
-    gpuSpheres.push_back({ {4.f, 1.f, 0.f, 1.f}, {0.f, 0.f, 0.f,  float(gpuMats.size() - 1)} });
+    // Large Metal Sphere
+    Sphere MetalSphere(glm::vec3(4.f, 1.f, 0.f), glm::vec3(1.f), 1.f, float(gpuMats.size() - 1));
+    MetalSphere.m_Material = Material::MakeMetal(glm::vec3(0.7f, 0.6f, 0.5f), 0.0);
+    gpuMats.push_back(MetalSphere.GetGPUMaterial());
+    MetalSphere.m_MatId = float(gpuMats.size() - 1);
+    gpuSpheres.push_back(MetalSphere.GetGPUSphere());
 
 
 }
@@ -180,9 +184,8 @@ void upload_ssbo(GLuint& id, GLuint binding, const void* data, GLsizeiptr bytes)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 };
 
-
-int main() {
-
+int glfw_Setup(GLFWwindow*& window)
+{
     // Initialize GLFW
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
@@ -195,7 +198,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window
-    GLFWwindow* window = glfwCreateWindow(Camera::SCR_WIDTH, Camera::SCR_HEIGHT, "OpenGL Version Check", nullptr, nullptr);
+    window = glfwCreateWindow(Camera::SCR_WIDTH, Camera::SCR_HEIGHT, "OpenGL Version Check", nullptr, nullptr);
     if (!window) {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
@@ -203,7 +206,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    
+
     // Initialize cursor position to prevent snapping
     {
         int width, height;
@@ -226,9 +229,6 @@ int main() {
     // Used to update dynamically update window size
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-
-    // Initialize GLAD
-    // 
     // Load OpenGL functions using GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD\n";
@@ -244,6 +244,23 @@ int main() {
     // Specify viewport of OpenGL
     glViewport(0, 0, Camera::SCR_WIDTH, Camera::SCR_HEIGHT);
 
+    return 0;
+}
+
+int main() {
+
+    GLFWwindow* window = nullptr;
+    if (glfw_Setup(window) != 0) {
+		std::cout << "GLFW setup failed\n";
+        return -1;
+    }
+
+    if (window == nullptr)
+    {
+        std::cout << "Window is nullptr!\n";
+        return -1;
+    }
+
     GLuint imageTexture;
     glGenTextures(1, &imageTexture);
     glBindTexture(GL_TEXTURE_2D, imageTexture);
@@ -252,8 +269,6 @@ int main() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, Camera::SCR_WIDTH, Camera::SCR_HEIGHT);
-
-
 
     // Create Shader program
     Shader graphicsProgram("shaders/source/vert.glsl", "shaders/source/frag.glsl");
@@ -312,7 +327,6 @@ int main() {
             1
         );
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
 
         // Clear the background
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

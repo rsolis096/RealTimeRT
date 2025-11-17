@@ -8,7 +8,15 @@ enum Material_Type {
 	DIELECTRIC,	// 2
 };
 
-struct Material {
+// std430 32 bytes
+struct GPUMaterial {
+	glm::vec4 albedo_fuzz;   // rgb = albedo, w = fuzz
+	glm::vec4 type_ref_pad;  // x = type (as float), y = ior, z,w = padding
+};
+
+class Material{
+
+public:
 	Material_Type m_Type;
 	float m_Fuzz;
 	float m_RefractionIndex;
@@ -32,8 +40,3 @@ struct Material {
 };
 
 
-// std430 32 bytes
-struct GPUMaterial {
-	glm::vec4 albedo_fuzz;   // rgb = albedo, w = fuzz
-	glm::vec4 type_ref_pad;  // x = type (as float), y = ior, z,w = padding
-};
