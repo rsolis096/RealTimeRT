@@ -19,6 +19,7 @@ public:
 	virtual int type_id() const = 0;
 
 	Material m_Material;
-	GPUMaterial GetGPUMaterial();
+
+	void SetMaterial(Material material);
 
 };

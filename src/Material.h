@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <vector>
 
 enum Material_Type {
 	LAMBERTIAN,	// 0
@@ -36,6 +37,10 @@ public:
 	// Dielectric
 	Material(const float rf);
 	static Material MakeDielectric(const float rf);
+
+	static std::vector<GPUMaterial> gpuMats;
+
+	void CreateGPUMaterial();
 
 };
 

@@ -14,7 +14,7 @@ class Sphere : public Object {
 		// Type 0 is considered a sphere
 		int type_id() const override { return 0; }
 
-		Sphere(glm::vec3 pos, glm::vec3 color, float rad, float matId);
+		Sphere(glm::vec3 pos, glm::vec3 color, float rad);
 
 		void BuildSphere();
 

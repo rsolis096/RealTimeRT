@@ -32,7 +32,6 @@ double lastY;
 
 //Scene Setup
 std::vector<GPUSphere>    gpuSpheres;
-std::vector<GPUMaterial>  gpuMats;
 GLuint ssboSpheres = 0, ssboMats = 0;
 
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
@@ -99,10 +98,10 @@ void setup_scene() {
     Material ground_material = Material::MakeLambertian(glm::vec3(0.5, 0.5, 0.5));
 
     // albedo, fuzz, type, refraction, padding
-    gpuMats.push_back({ { ground_material.m_Albedo, ground_material.m_Fuzz }, {float(ground_material.m_Type), 0.f, 0.f, 0.f} });
+    Material::gpuMats.push_back({ { ground_material.m_Albedo, ground_material.m_Fuzz }, {float(ground_material.m_Type), 0.f, 0.f, 0.f} });
     
     // position, radius, color, mat index
-    Sphere GroundSphere(glm::vec3(0, -1000.f, 0.f), glm::vec3(0.f), 1000.f, 0.f);
+    Sphere GroundSphere(glm::vec3(0, -1000.f, 0.f), glm::vec3(0.f), 1000.f);
     gpuSpheres.push_back(GroundSphere.GetGPUSphere());
    
     // Generate objects with random materials
@@ -119,10 +118,8 @@ void setup_scene() {
 
                     // diffuse
                     glm::vec3 albedo = random_vec() * random_vec();
-                    Sphere TempSphere(center, albedo, .2f, float(gpuMats.size() - 1));
-                    TempSphere.m_Material = Material::MakeLambertian(albedo);
-                    gpuMats.push_back(TempSphere.GetGPUMaterial());
-                    TempSphere.m_MatId = float(gpuMats.size() - 1);
+                    Sphere TempSphere(center, albedo, .2f);
+                    TempSphere.SetMaterial(Material::MakeLambertian(albedo));
                     gpuSpheres.push_back(TempSphere.GetGPUSphere());
 
                 }
@@ -130,21 +127,17 @@ void setup_scene() {
 
                     // metal
                     glm::vec3 albedo = random_vec(0.5, 1);
-                    Sphere TempSphere(center, albedo, .2f, float(gpuMats.size() - 1));
                     float fuzz = random_float(0, 0.5);
-                    TempSphere.m_Material = Material::MakeMetal(albedo, fuzz);
-                    gpuMats.push_back(TempSphere.GetGPUMaterial());
-                    TempSphere.m_MatId = float(gpuMats.size() - 1);
+                    Sphere TempSphere(center, albedo, .2f);
+                    TempSphere.SetMaterial(Material::MakeMetal(albedo, fuzz));
                     gpuSpheres.push_back(TempSphere.GetGPUSphere());
 
                 }
                 else {
 
                     // glass
-                    Sphere TempSphere(center, glm::vec3(0.f), .2f, float(gpuMats.size() - 1));
-                    TempSphere.m_Material = Material::MakeDielectric(0.f);
-                    gpuMats.push_back(TempSphere.GetGPUMaterial());
-                    TempSphere.m_MatId = float(gpuMats.size() - 1);
+                    Sphere TempSphere(center, glm::vec3(0.f), .2f);
+                    TempSphere.SetMaterial(Material::MakeDielectric(0.f));
                     gpuSpheres.push_back(TempSphere.GetGPUSphere());
                 }
             }
@@ -153,24 +146,18 @@ void setup_scene() {
 
     
     // Large Glass Sphere
-    Sphere GlassSphere(glm::vec3(0, 1.f, 0.f), glm::vec3(0.f), 1.f, float(gpuMats.size() - 1));
-    GlassSphere.m_Material = Material::MakeDielectric(0.f);
-    gpuMats.push_back(GlassSphere.GetGPUMaterial());
-    GlassSphere.m_MatId = float(gpuMats.size() - 1);
+    Sphere GlassSphere(glm::vec3(0, 1.f, 0.f), glm::vec3(0.f), 1.f);
+    GlassSphere.SetMaterial(Material::MakeDielectric(0.f));
     gpuSpheres.push_back(GlassSphere.GetGPUSphere());
 
     // Large Matte Sphere
-    Sphere MatteSphere(glm::vec3(-4.f, 1.f, 0.f), glm::vec3(0.f), 1.f, float(gpuMats.size() - 1));
+    Sphere MatteSphere(glm::vec3(-4.f, 1.f, 0.f), glm::vec3(0.f), 1.f);
     MatteSphere.m_Material = Material::MakeLambertian(glm::vec3(0.4, 0.2, 0.1));
-    gpuMats.push_back(MatteSphere.GetGPUMaterial());
-    MatteSphere.m_MatId = float(gpuMats.size() - 1);
     gpuSpheres.push_back(MatteSphere.GetGPUSphere());
 
     // Large Metal Sphere
-    Sphere MetalSphere(glm::vec3(4.f, 1.f, 0.f), glm::vec3(1.f), 1.f, float(gpuMats.size() - 1));
-    MetalSphere.m_Material = Material::MakeMetal(glm::vec3(0.7f, 0.6f, 0.5f), 0.0);
-    gpuMats.push_back(MetalSphere.GetGPUMaterial());
-    MetalSphere.m_MatId = float(gpuMats.size() - 1);
+    Sphere MetalSphere(glm::vec3(4.f, 1.f, 0.f), glm::vec3(1.f), 1.f);
+    MetalSphere.SetMaterial(Material::MakeMetal(glm::vec3(0.7f, 0.6f, 0.5f), 0.0));
     gpuSpheres.push_back(MetalSphere.GetGPUSphere());
 
 
@@ -285,9 +272,9 @@ int main() {
     // Send scene to computer shader (upload ssbo and  init key values
     computeProgram.use();
     upload_ssbo(ssboSpheres, /*binding=*/0, gpuSpheres.data(), gpuSpheres.size() * sizeof(GPUSphere));
-    upload_ssbo(ssboMats, /*binding=*/1, gpuMats.data(), gpuMats.size() * sizeof(GPUMaterial));
+    upload_ssbo(ssboMats, /*binding=*/1, Material::gpuMats.data(), Material::gpuMats.size() * sizeof(GPUMaterial));
     glUniform1i(glGetUniformLocation(computeProgram.m_ProgramId, "uSphereCount"), (int)gpuSpheres.size());
-    glUniform1i(glGetUniformLocation(computeProgram.m_ProgramId, "uMaterialsCount"), (int)gpuMats.size());
+    glUniform1i(glGetUniformLocation(computeProgram.m_ProgramId, "uMaterialsCount"), (int)Material::gpuMats.size());
     computeProgram.setInt("SCR_HEIGHT", Camera::SCR_HEIGHT);
     computeProgram.setInt("SCR_WIDTH", Camera::SCR_WIDTH);
 

@@ -1,5 +1,8 @@
 #include "Material.h"
 
+std::vector<GPUMaterial> Material::gpuMats = {};
+
+
 // Default White Sphere
 Material::Material()
 {
@@ -64,4 +67,16 @@ Material Material::MakeDielectric(const float rf) {
 	mat.m_Fuzz = 0.0f;
 	mat.m_Albedo = glm::vec3(1.f);
 	return mat;
+}
+
+void Material::CreateGPUMaterial()
+{
+	GPUMaterial gpuMat;
+	gpuMat.type_ref_pad.x = static_cast<float>(m_Type);
+	gpuMat.type_ref_pad.y = m_RefractionIndex;
+	gpuMat.type_ref_pad.w = 0.f;
+	gpuMat.type_ref_pad.z = 0.f;
+	gpuMat.albedo_fuzz = glm::vec4(m_Albedo, m_Fuzz);
+
+	gpuMats.push_back(gpuMat);
 }

@@ -1,9 +1,8 @@
 #include "Sphere.h"
 
-Sphere::Sphere(glm::vec3 pos, glm::vec3 color, float rad, float matId) {
+Sphere::Sphere(glm::vec3 pos, glm::vec3 color, float rad) {
     m_Position = pos;
     m_Radius = rad;
-    m_MatId = matId;
     m_Color = color;
 
 	// Compute the vertices and indices for the sphere
