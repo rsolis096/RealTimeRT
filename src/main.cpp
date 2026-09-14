@@ -20,6 +20,9 @@
 
 #include "GUI.h"
 
+#include <cmath>
+
+
 Camera cam;
 double deltaTime = 0.0;
 double debounceThreshold = 0.2;
@@ -34,23 +37,24 @@ double lastY;
 std::vector<GPUSphere>    gpuSpheres;
 GLuint ssboSpheres = 0, ssboMats = 0;
 
+double delta_x = 0;
+double delta_y = 0; 
+
 void mouse_callback(GLFWwindow* window, double mouse_x, double mouse_y)
 {
+    static double smoothedDeltaX = 0.0;
+    static double smoothedDeltaY = 0.0;
 
-    // Compute the change in mouse position
     double delta_x = mouse_x - lastX;
-    double delta_y = lastY - mouse_y; // reversed since y-coordinates go from bottom to top
+    double delta_y = lastY - mouse_y;
 
     lastX = mouse_x;
     lastY = mouse_y;
 
-    const double sensitivity = 0.3;
-    delta_x *= sensitivity;
-    delta_y *= sensitivity;
-
-    if(!isWindowHidden)
-        cam.processMouse(delta_x, delta_y);
+    if (!isWindowHidden)
+        cam.processMouse(delta_x * 0.1, delta_y * 0.1);
 }
+
 
 void processInput(GLFWwindow* window, double deltaTime) {
 
@@ -210,7 +214,7 @@ int glfw_Setup(GLFWwindow*& window)
     glfwSwapInterval(0);
 
     // Locks cursor to screen, apply callback function
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mouse_callback);
 
     // Used to update dynamically update window size

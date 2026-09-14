@@ -8,7 +8,6 @@ void main() {
         vec2(-1.0, -1.0),  // bottomleft
         vec2( 3.0, -1.0),  // bottomright (offscreen)
         vec2(-1.0,  3.0)   // topleft   (offscreen)
-
     );
 
     // Map NDC [-1,1] to UV [0,1]
